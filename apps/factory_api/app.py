@@ -61,6 +61,30 @@ def create_app(orchestrator: Orchestrator, *, tracer=None) -> FastAPI:
                 span.set_attribute("http.response.status_code", response.status_code)
                 return response
 
+    @app.get("/healthz")
+    def healthz():
+        return {"status": "ok", "service": "factory-api", "version": "0.1.0"}
+
+    @app.get("/capabilities")
+    def capabilities():
+        return {
+            "implemented": [
+                "job_orchestration",
+                "deterministic_simulation",
+                "cooperative_fleet_planning",
+                "cbs_reference_planner",
+                "vision_verification",
+                "deterministic_replay_core",
+            ],
+            "prepared_not_live_validated": [
+                "postgresql_persistence",
+                "clickhouse_telemetry",
+                "rust_robot_runtime",
+                "cp_sat_scheduler",
+            ],
+            "hardware_validated": False,
+        }
+
     @app.post("/jobs", status_code=status.HTTP_201_CREATED)
     def create_job(body: JobInput, x_command_id: str = Header(alias="X-Command-ID")):
         if len({task.task_id for task in body.tasks}) != len(body.tasks):

@@ -98,3 +98,42 @@ def canonical_replay_json(report: ReplayReport) -> str:
 
 def replay_report_digest(report: ReplayReport) -> str:
     return sha256(canonical_replay_json(report).encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True, slots=True)
+class ReplayDivergence:
+    index: int
+    reason: str
+    left: SimEvent | None
+    right: SimEvent | None
+
+
+def first_replay_divergence(
+    left_events: Iterable[SimEvent],
+    right_events: Iterable[SimEvent],
+) -> ReplayDivergence | None:
+    """Return the first structural difference between two event streams.
+
+    This is a debugging helper for deterministic replay: it intentionally
+    reports the earliest causal divergence rather than only a final digest
+    mismatch.
+    """
+    left = list(left_events)
+    right = list(right_events)
+    limit = max(len(left), len(right))
+    for index in range(limit):
+        a = left[index] if index < len(left) else None
+        b = right[index] if index < len(right) else None
+        if a is None or b is None:
+            return ReplayDivergence(index, "stream_length", a, b)
+        if a.tick != b.tick:
+            return ReplayDivergence(index, "tick", a, b)
+        if a.sequence != b.sequence:
+            return ReplayDivergence(index, "sequence", a, b)
+        if a.kind != b.kind:
+            return ReplayDivergence(index, "kind", a, b)
+        if a.aggregate_id != b.aggregate_id:
+            return ReplayDivergence(index, "aggregate_id", a, b)
+        if a.payload != b.payload:
+            return ReplayDivergence(index, "payload", a, b)
+    return None

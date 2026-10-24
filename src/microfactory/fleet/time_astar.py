@@ -65,8 +65,17 @@ def time_astar(
         _, _, _, _, _, _, state = heappop(frontier)
         current, t = state
         if current == goal:
-            goal_state = state
-            break
+            # Cooperative planning treats a robot as occupying its goal until
+            # a later replanning cycle explicitly releases it. Reaching a goal
+            # is therefore only terminal when that cell remains free for the
+            # rest of this planning horizon. Otherwise the planner may need to
+            # wait elsewhere and enter the goal after an existing route passes.
+            if all(
+                _vertex_free(table, robot_id, goal, future_t)
+                for future_t in range(t, max_time + 1)
+            ):
+                goal_state = state
+                break
         if t >= max_time:
             continue
 

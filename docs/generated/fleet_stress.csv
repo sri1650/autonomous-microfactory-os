@@ -1,0 +1,4 @@
+robots,seed,grid_size,planner_ms,total_steps,direct_steps,path_stretch,makespan,conflict_free
+10,1,20,66.460,139,139,1.0000,26,1
+25,2,30,46.597,524,503,1.0417,41,1
+50,3,40,243.063,1404,1332,1.0541,60,1

@@ -68,3 +68,10 @@ PostgreSQL: schema prepared; live database not validated here.
 ClickHouse: adapter boundary/DDL prepared; live server not validated here.
 OpenTelemetry: Python boundary tested; Rust/process propagation not yet validated.
 Physical hardware: not validated.
+
+## Additional no-Work hardening
+- deterministic 10/25/50-robot fleet stress harness and retained CSV/report
+- fixed future-goal reservation bug: time-expanded A* only terminates when the goal can remain occupied through the planning horizon
+- replay divergence debugger reports the first causal mismatch instead of only a final digest mismatch
+- Factory API `/healthz` and `/capabilities` endpoints expose service health and honest validation boundaries
+- full local Python suite now passes 105 tests

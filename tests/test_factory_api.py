@@ -66,3 +66,18 @@ def test_duplicate_task_ids_are_rejected_at_boundary():
 def test_missing_job_returns_404():
     c = client()
     assert c.get("/jobs/missing").status_code == 404
+
+
+
+def test_health_and_capabilities():
+    c = client()
+    health = c.get("/healthz")
+    assert health.status_code == 200
+    assert health.json()["status"] == "ok"
+
+    caps = c.get("/capabilities")
+    assert caps.status_code == 200
+    body = caps.json()
+    assert "cooperative_fleet_planning" in body["implemented"]
+    assert "rust_robot_runtime" in body["prepared_not_live_validated"]
+    assert body["hardware_validated"] is False

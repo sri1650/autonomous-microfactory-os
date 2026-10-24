@@ -35,3 +35,16 @@ def test_time_astar_fails_with_bounded_horizon():
     table.reserve("blocker", [(1, 0), (1, 0), (1, 0)], start_time=1)
     with pytest.raises(ValueError, match="no time-feasible"):
         time_astar(grid, table, "r1", (0, 0), (2, 0), start_time=0, max_time=3)
+
+
+
+def test_goal_must_be_free_for_remaining_horizon():
+    grid = Grid(4, 2)
+    table = ReservationTable()
+    # Existing robot passes through (2, 0) at t=3 then leaves it.
+    table.reserve("existing", [(3, 1), (3, 0), (2, 0), (1, 0)], start_time=1)
+    path = time_astar(grid, table, "new", (0, 0), (2, 0), max_time=8)
+    # The new robot must not simply arrive at t=2 and claim it can stay there.
+    # It must delay/re-route until the future occupancy has cleared.
+    assert path[-1] == (2, 0)
+    assert len(path) - 1 >= 4

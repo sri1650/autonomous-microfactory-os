@@ -55,7 +55,7 @@
       "python -m pytest -q tests/test_orchestrator.py"
     ],
     "objective": "Create job submission, ready-task progression, retry/cancel and idempotent state-update logic independent of web/database frameworks.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/orchestrator/**",
@@ -294,7 +294,7 @@
       "python -m pytest -q tests/test_time_astar.py"
     ],
     "objective": "Plan (x,y,t) paths respecting reservations and wait actions.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/fleet/time_astar.py",
@@ -311,7 +311,7 @@
       "python -m pytest -q tests/test_cooperative.py"
     ],
     "objective": "Plan robots in deterministic priority order and prevent vertex/edge conflicts.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/fleet/cooperative.py",
@@ -380,7 +380,7 @@
       "python -m pytest -q tests/test_scheduler_fifo.py"
     ],
     "objective": "Assign ready tasks by priority/creation order while respecting resource capability/availability.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/scheduler/**",

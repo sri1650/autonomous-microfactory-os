@@ -89,7 +89,7 @@
       "python -m pytest -q tests/test_sim_clock.py"
     ],
     "objective": "Implement logical tick clock and ordered immutable simulation events.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/sim/clock.py",
@@ -107,7 +107,7 @@
       "python -m pytest -q tests/test_sim_world.py"
     ],
     "objective": "Represent cells, stations, resources and robot poses with deterministic update semantics.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/sim/world.py",
@@ -124,7 +124,7 @@
       "python -m pytest -q tests/test_sim_machines.py"
     ],
     "objective": "Simulate machine busy/ready/faulted execution with seeded duration/failure policy.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/sim/machines.py",
@@ -141,7 +141,7 @@
       "python -m pytest -q tests/test_scenarios.py"
     ],
     "objective": "Load versioned JSON/YAML scenarios with explicit seed and validate schema.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/sim/scenario.py",
@@ -159,7 +159,7 @@
       "python -m pytest -q tests/test_sim_determinism.py"
     ],
     "objective": "Prove same scenario+seed yields identical ordered event digest.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/sim/**",

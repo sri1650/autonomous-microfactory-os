@@ -16,24 +16,28 @@
 - `M4-T03` time-expanded A* with wait actions complete
 - `M4-T04` deterministic cooperative multi-robot planner complete
 - `M5-T01` priority/FIFO resource scheduler baseline complete
+- `M2-T01` logical clock and immutable event model complete
+- `M2-T02` deterministic factory world model complete
+- `M2-T03` seeded simulated machine adapter complete
+- `M2-T04` versioned JSON/YAML scenario loader complete
+- `M2-T05` same scenario + seed event-digest determinism proven
 - 20-case synthetic fault corpus, failure matrix, benchmark catalog and four ADRs prepared
 - CircuitHub-oriented interview pack and portfolio evidence plan prepared
 - GitHub profile repositioned around production robotics/software
 - Rust state-machine scaffold written but not locally compiled (Rust toolchain unavailable in this preparation environment)
 
 ## Verified locally
-- 45 Python tests passing
+- 55 Python tests passing
 - Python compileall passing
 - synthetic fault corpus parses and validates structurally
 
 ## Next low-risk tasks that can be done without Codex
-1. `M2-T01` deterministic simulation clock/events
-2. `M2-T02` factory world model
-3. `M2-T03` simulated machine adapter
-4. `M2-T04` scenario loader
-5. `M2-T05` deterministic event digest
-6. `M4-T05` adversarial fleet scenarios
-7. `M4-T06` fleet benchmark harness
+1. `M4-T05` adversarial fleet scenarios
+2. `M4-T06` fleet benchmark harness
+3. `M1-T05` FastAPI boundary
+4. `M6-T01` vision contracts/fixtures
+5. `M6-T02` deterministic OpenCV alignment baseline
+6. `M6-T03` vision decision policy
 
 ## Tasks to reserve for Work/Codex after reset
 - Rust compile/gRPC/concurrency integration

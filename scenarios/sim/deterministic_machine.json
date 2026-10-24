@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "seed": 4242,
+  "grid": {"width": 6, "height": 4, "blocked": [[2, 2]]},
+  "robots": [
+    {"id": "mover-01", "start": [0, 0]},
+    {"id": "mover-02", "start": [5, 3]}
+  ],
+  "stations": [
+    {"id": "printer-01", "cell": [3, 1], "type": "printer"},
+    {"id": "vision-01", "cell": [4, 1], "type": "vision"}
+  ],
+  "machines": [
+    {"id": "printer-01", "duration_ticks": [2, 4], "failure_probability": 0.0},
+    {"id": "vision-01", "duration_ticks": [1, 2], "failure_probability": 0.0}
+  ],
+  "operations": [
+    {"tick": 0, "machine_id": "printer-01", "task_id": "print-a"},
+    {"tick": 5, "machine_id": "vision-01", "task_id": "inspect-a"}
+  ]
+}

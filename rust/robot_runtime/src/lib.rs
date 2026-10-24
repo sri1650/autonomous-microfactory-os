@@ -111,6 +111,71 @@ pub enum CommandLifecycleError {
     },
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WatchdogState {
+    AwaitingHeartbeat,
+    Healthy,
+    Expired,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WatchdogError {
+    ZeroTimeout,
+    NonMonotonicTime { previous_ms: u64, observed_ms: u64 },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HeartbeatWatchdog {
+    timeout_ms: u64,
+    last_heartbeat_ms: Option<u64>,
+}
+
+impl HeartbeatWatchdog {
+    pub fn new(timeout_ms: u64) -> Result<Self, WatchdogError> {
+        if timeout_ms == 0 {
+            return Err(WatchdogError::ZeroTimeout);
+        }
+        Ok(Self {
+            timeout_ms,
+            last_heartbeat_ms: None,
+        })
+    }
+
+    pub fn last_heartbeat_ms(&self) -> Option<u64> {
+        self.last_heartbeat_ms
+    }
+
+    pub fn record_heartbeat(&mut self, now_ms: u64) -> Result<(), WatchdogError> {
+        if let Some(previous_ms) = self.last_heartbeat_ms {
+            if now_ms < previous_ms {
+                return Err(WatchdogError::NonMonotonicTime {
+                    previous_ms,
+                    observed_ms: now_ms,
+                });
+            }
+        }
+        self.last_heartbeat_ms = Some(now_ms);
+        Ok(())
+    }
+
+    pub fn state_at(&self, now_ms: u64) -> Result<WatchdogState, WatchdogError> {
+        let Some(previous_ms) = self.last_heartbeat_ms else {
+            return Ok(WatchdogState::AwaitingHeartbeat);
+        };
+        if now_ms < previous_ms {
+            return Err(WatchdogError::NonMonotonicTime {
+                previous_ms,
+                observed_ms: now_ms,
+            });
+        }
+        if now_ms - previous_ms >= self.timeout_ms {
+            Ok(WatchdogState::Expired)
+        } else {
+            Ok(WatchdogState::Healthy)
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct RobotRuntimeState {
     mode: RobotMode,
@@ -286,5 +351,34 @@ mod tests {
             runtime.finish_command(conflicting),
             Err(CommandLifecycleError::ConflictingTerminalResult { .. })
         ));
+    }
+
+    #[test]
+    fn watchdog_expires_at_the_timeout_boundary() {
+        let mut watchdog = HeartbeatWatchdog::new(1_000).unwrap();
+        assert_eq!(watchdog.state_at(10), Ok(WatchdogState::AwaitingHeartbeat));
+        watchdog.record_heartbeat(100).unwrap();
+        assert_eq!(watchdog.state_at(1_099), Ok(WatchdogState::Healthy));
+        assert_eq!(watchdog.state_at(1_100), Ok(WatchdogState::Expired));
+    }
+
+    #[test]
+    fn heartbeat_refreshes_watchdog_and_rejects_time_reversal() {
+        let mut watchdog = HeartbeatWatchdog::new(500).unwrap();
+        watchdog.record_heartbeat(1_000).unwrap();
+        watchdog.record_heartbeat(1_200).unwrap();
+        assert_eq!(watchdog.state_at(1_600), Ok(WatchdogState::Healthy));
+        assert_eq!(
+            watchdog.record_heartbeat(1_199),
+            Err(WatchdogError::NonMonotonicTime {
+                previous_ms: 1_200,
+                observed_ms: 1_199,
+            })
+        );
+    }
+
+    #[test]
+    fn zero_timeout_is_invalid() {
+        assert_eq!(HeartbeatWatchdog::new(0), Err(WatchdogError::ZeroTimeout));
     }
 }

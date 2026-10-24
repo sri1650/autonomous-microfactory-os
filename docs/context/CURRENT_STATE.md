@@ -21,23 +21,25 @@
 - `M2-T03` seeded simulated machine adapter complete
 - `M2-T04` versioned JSON/YAML scenario loader complete
 - `M2-T05` same scenario + seed event-digest determinism proven
+- `M1-T05` thin FastAPI create/get/cancel boundary complete
+- `M4-T05` adversarial intersection/corridor/contention fleet scenarios complete
+- `M4-T06` CSV fleet benchmark harness complete
 - 20-case synthetic fault corpus, failure matrix, benchmark catalog and four ADRs prepared
 - CircuitHub-oriented interview pack and portfolio evidence plan prepared
 - GitHub profile repositioned around production robotics/software
 - Rust state-machine scaffold written but not locally compiled (Rust toolchain unavailable in this preparation environment)
 
 ## Verified locally
-- 55 Python tests passing
+- 62 Python tests passing
 - Python compileall passing
 - synthetic fault corpus parses and validates structurally
 
 ## Next low-risk tasks that can be done without Codex
-1. `M4-T05` adversarial fleet scenarios
-2. `M4-T06` fleet benchmark harness
-3. `M1-T05` FastAPI boundary
-4. `M6-T01` vision contracts/fixtures
-5. `M6-T02` deterministic OpenCV alignment baseline
-6. `M6-T03` vision decision policy
+1. `M6-T01` vision contracts/fixtures
+2. `M6-T02` deterministic OpenCV alignment baseline
+3. `M6-T03` vision decision policy
+4. `M6-T04` ONNX adapter if runtime support is available
+5. `M6-T05` vision benchmark harness
 
 ## Tasks to reserve for Work/Codex after reset
 - Rust compile/gRPC/concurrency integration

@@ -1,0 +1,12 @@
+{
+  "id": "contention_four",
+  "grid": {"width": 7, "height": 7, "blocked": []},
+  "max_time": 40,
+  "robots": [
+    {"id": "west", "start": [0,3], "goal": [6,3], "priority": 10},
+    {"id": "east", "start": [6,3], "goal": [0,3], "priority": 9},
+    {"id": "north", "start": [3,0], "goal": [3,6], "priority": 8},
+    {"id": "south", "start": [3,6], "goal": [3,0], "priority": 7}
+  ],
+  "expected": {"collision_free": true, "edge_swap_free": true}
+}

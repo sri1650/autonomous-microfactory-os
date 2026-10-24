@@ -1,0 +1,10 @@
+{
+  "id": "intersection_two",
+  "grid": {"width": 5, "height": 5, "blocked": []},
+  "max_time": 20,
+  "robots": [
+    {"id": "east-west", "start": [0, 2], "goal": [4, 2], "priority": 10},
+    {"id": "north-south", "start": [2, 0], "goal": [2, 4], "priority": 5}
+  ],
+  "expected": {"collision_free": true, "edge_swap_free": true}
+}

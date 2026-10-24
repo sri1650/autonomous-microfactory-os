@@ -178,7 +178,7 @@
       "cargo test --workspace"
     ],
     "objective": "Make the prepared Rust state machine compile cleanly and align states with protobuf contracts.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "rust/robot_runtime/**",

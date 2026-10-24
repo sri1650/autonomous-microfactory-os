@@ -21,13 +21,31 @@ pub fn can_transition(from: RobotMode, to: RobotMode) -> bool {
     matches!(
         (from, to),
         (Offline, Idle)
-            | (Idle, Homing) | (Idle, Ready) | (Idle, Offline) | (Idle, EStop)
-            | (Homing, Ready) | (Homing, Faulted) | (Homing, EStop)
-            | (Ready, Executing) | (Ready, Paused) | (Ready, Faulted) | (Ready, EStop) | (Ready, Offline)
-            | (Executing, Ready) | (Executing, Paused) | (Executing, Faulted) | (Executing, EStop)
-            | (Paused, Ready) | (Paused, Executing) | (Paused, Faulted) | (Paused, EStop)
-            | (Faulted, Idle) | (Faulted, EStop) | (Faulted, Offline)
-            | (EStop, Idle) | (EStop, Offline)
+            | (Idle, Homing)
+            | (Idle, Ready)
+            | (Idle, Offline)
+            | (Idle, EStop)
+            | (Homing, Ready)
+            | (Homing, Faulted)
+            | (Homing, EStop)
+            | (Ready, Executing)
+            | (Ready, Paused)
+            | (Ready, Faulted)
+            | (Ready, EStop)
+            | (Ready, Offline)
+            | (Executing, Ready)
+            | (Executing, Paused)
+            | (Executing, Faulted)
+            | (Executing, EStop)
+            | (Paused, Ready)
+            | (Paused, Executing)
+            | (Paused, Faulted)
+            | (Paused, EStop)
+            | (Faulted, Idle)
+            | (Faulted, EStop)
+            | (Faulted, Offline)
+            | (EStop, Idle)
+            | (EStop, Offline)
     )
 }
 
@@ -45,8 +63,14 @@ mod tests {
 
     #[test]
     fn valid_execution_path() {
-        assert_eq!(transition(RobotMode::Ready, RobotMode::Executing), Ok(RobotMode::Executing));
-        assert_eq!(transition(RobotMode::Executing, RobotMode::Ready), Ok(RobotMode::Ready));
+        assert_eq!(
+            transition(RobotMode::Ready, RobotMode::Executing),
+            Ok(RobotMode::Executing)
+        );
+        assert_eq!(
+            transition(RobotMode::Executing, RobotMode::Ready),
+            Ok(RobotMode::Ready)
+        );
     }
 
     #[test]

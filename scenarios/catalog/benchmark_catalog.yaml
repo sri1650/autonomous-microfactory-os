@@ -1,0 +1,53 @@
+version: 1
+scenarios:
+  - id: fleet_crossing_05
+    domain: fleet
+    seed: 1001
+    robots: 5
+    topology: four_way_intersection
+    objective: zero_collisions_and_zero_edge_swaps
+  - id: fleet_corridor_20
+    domain: fleet
+    seed: 1002
+    robots: 20
+    topology: narrow_bidirectional_corridor
+    objective: bounded_deadlock_free_completion
+  - id: fleet_dense_50
+    domain: fleet
+    seed: 1003
+    robots: 50
+    topology: warehouse_grid
+    objective: compare_planner_latency_and_path_stretch
+  - id: scheduler_baseline_10
+    domain: scheduler
+    seed: 2001
+    jobs: 10
+    resources: 5
+    objective: compare_fifo_vs_cp_sat_makespan
+  - id: scheduler_contention_40
+    domain: scheduler
+    seed: 2002
+    jobs: 40
+    resources: 8
+    objective: resource_contention_and_lateness
+  - id: vision_alignment_nominal
+    domain: vision
+    seed: 3001
+    samples: 100
+    objective: alignment_error_distribution
+  - id: vision_low_confidence
+    domain: vision
+    seed: 3002
+    samples: 100
+    objective: verify_pass_retry_fail_human_review_policy
+  - id: e2e_golden_3_jobs
+    domain: end_to_end
+    seed: 4001
+    jobs: 3
+    objective: deterministic_terminal_completion
+  - id: e2e_fault_recovery
+    domain: end_to_end
+    seed: 4002
+    jobs: 3
+    faults: [blocked_aisle, failed_pick, heartbeat_loss]
+    objective: bounded_recovery_and_explainable_failure

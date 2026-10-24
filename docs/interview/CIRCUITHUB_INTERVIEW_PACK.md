@@ -45,3 +45,42 @@ Show: explicit interfaces; idempotency; failure semantics; deterministic tests; 
 
 ## 12. Honest limitation statement
 At the current software-only stage, the project demonstrates architecture, simulation, tests and integration patterns. It does not claim production-hardware validation, safety certification, real robot stopping-distance validation or factory-scale throughput until those measurements exist.
+
+---
+
+# Engineering stories discovered during implementation
+
+## 1. Goal-occupancy reservation bug
+**Problem:** the prioritised fleet planner originally reserved a robot path only through its arrival timestep. A later robot could therefore legally route through the first robot's final cell even though that robot was assumed to remain there.
+
+**Fix:** hold the goal-cell reservation through the planning horizon unless a later replanning cycle explicitly releases/moves that robot.
+
+**Why this matters:** collision checking is not just about simultaneous path segments; terminal occupancy semantics have to be explicit.
+
+**Interview angle:** discuss model assumptions, temporal reservations and why a benchmark that only compares overlapping path-list lengths can hide this bug.
+
+## 2. Failed terminal task could not retry
+**Problem:** if the last active task failed, `derived_terminal_state()` made the job `FAILED`. The retry API itself required the job to be `RUNNING`, making the documented retry transition impossible for that terminal task.
+
+**Fix:** allow one tightly constrained recovery transition: a `FAILED` job may reopen to `RUNNING` only when the selected task is `FAILED` and the requested task transition is `FAILED -> READY`. Other mutations of failed jobs remain rejected.
+
+**Interview angle:** state-machine invariants, recovery semantics, idempotency and why failure/retry behavior must be tested end-to-end rather than only at the task level.
+
+## 3. Why CBS is not the default planner
+The project implements both prioritised cooperative A* and Conflict-Based Search.
+
+On the retained adversarial cases, both produced the same sum-of-costs and makespan, while CBS consumed more compute. Therefore the engineering decision is:
+- cooperative A*: online/default planner;
+- CBS: reference/escalation planner and quality comparator for tightly coupled conflicts.
+
+This is stronger than choosing the theoretically more sophisticated algorithm by default without workload evidence.
+
+## 4. Observability is part of correctness
+The Python API boundary now starts OpenTelemetry spans, while the event-sink decorator attaches trace ID, span ID and job correlation ID to orchestrator events.
+
+The Rust/runtime propagation is intentionally still labelled incomplete. This gives a useful discussion of where trace context must cross language/process boundaries and why ClickHouse telemetry is separated from transactional Postgres state.
+
+## 5. Honest validation boundary
+Current measurable evidence includes deterministic simulation, route conflict tests, synthetic vision fixtures, Python integration slices and trace correlation. It does **not** include production robots, certified safety functions, real factory cycle-time numbers or a live ClickHouse/Postgres deployment yet.
+
+Use this limitation proactively in interviews; it demonstrates engineering judgement rather than weakening the project.

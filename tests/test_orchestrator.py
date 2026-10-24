@@ -79,3 +79,27 @@ def test_cancel_job_cancels_nonterminal_tasks():
     assert result.job.state is JobState.CANCELLED
     assert all(task.state is TaskState.CANCELLED for task in result.job.tasks.values())
     assert events.events[-1].event_type == "JOB_CANCELLED"
+
+
+def test_terminal_failed_task_can_be_retried_and_reopens_job():
+    svc, _, _ = make_service()
+    svc.submit_job(build_job(), command_id="submit-terminal-retry")
+
+    svc.transition_task("job-1", "load", TaskState.ASSIGNED, command_id="l1", resource_id="g1")
+    svc.transition_task("job-1", "load", TaskState.EXECUTING, command_id="l2")
+    svc.transition_task("job-1", "load", TaskState.SUCCEEDED, command_id="l3")
+
+    svc.transition_task("job-1", "move", TaskState.ASSIGNED, command_id="m1", resource_id="r1")
+    svc.transition_task("job-1", "move", TaskState.EXECUTING, command_id="m2")
+    failed = svc.transition_task("job-1", "move", TaskState.FAILED, command_id="m3")
+    assert failed.job.state is JobState.FAILED
+
+    retried = svc.retry_task("job-1", "move", command_id="m4")
+    assert retried.job.state is JobState.RUNNING
+    assert retried.job.tasks["move"].state is TaskState.READY
+    assert retried.job.tasks["move"].attempt == 1
+
+    svc.transition_task("job-1", "move", TaskState.ASSIGNED, command_id="m5", resource_id="r1")
+    svc.transition_task("job-1", "move", TaskState.EXECUTING, command_id="m6")
+    done = svc.transition_task("job-1", "move", TaskState.SUCCEEDED, command_id="m7")
+    assert done.job.state is JobState.SUCCEEDED

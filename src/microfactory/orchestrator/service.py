@@ -88,12 +88,21 @@ class Orchestrator:
             return replay
 
         job = self._require_job(job_id)
-        if job.state is not JobState.RUNNING:
-            raise ValueError(f"job {job_id!r} is not running")
         try:
             task = job.tasks[task_id]
         except KeyError as exc:
             raise KeyError(f"unknown task {task_id!r}") from exc
+
+        # A terminal task failure can make the job FAILED before an explicit
+        # retry decision is made. Permit only FAILED-task -> READY to reopen
+        # that job; all other task mutations still require RUNNING.
+        if job.state is JobState.FAILED:
+            if not (task.state is TaskState.FAILED and target is TaskState.READY):
+                raise ValueError(f"job {job_id!r} is not running")
+            assert_job_transition(job.state, JobState.RUNNING)
+            job.state = JobState.RUNNING
+        elif job.state is not JobState.RUNNING:
+            raise ValueError(f"job {job_id!r} is not running")
 
         previous = task.state
         task.transition_to(target)

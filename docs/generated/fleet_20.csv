@@ -1,0 +1,2 @@
+robots,seed,grid_size,planner_ms,total_steps,direct_steps,path_stretch,completion_tick,vertex_conflicts,edge_swaps
+20,1002,40,86.353,602,601,1.0017,48,0,0

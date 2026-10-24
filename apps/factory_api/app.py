@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import FastAPI, Header, HTTPException, status
+from fastapi import FastAPI, Header, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from microfactory.domain.models import JobRecord, TaskDefinition, TaskRecord
@@ -44,8 +44,22 @@ def _job_payload(job: JobRecord) -> dict[str, Any]:
     }
 
 
-def create_app(orchestrator: Orchestrator) -> FastAPI:
+def create_app(orchestrator: Orchestrator, *, tracer=None) -> FastAPI:
     app = FastAPI(title="Autonomous Microfactory Factory API", version="0.1.0")
+
+    if tracer is not None:
+        @app.middleware("http")
+        async def trace_request(request: Request, call_next):
+            with tracer.start_as_current_span(
+                f"{request.method} {request.url.path}",
+                attributes={
+                    "http.request.method": request.method,
+                    "url.path": request.url.path,
+                },
+            ) as span:
+                response = await call_next(request)
+                span.set_attribute("http.response.status_code", response.status_code)
+                return response
 
     @app.post("/jobs", status_code=status.HTTP_201_CREATED)
     def create_job(body: JobInput, x_command_id: str = Header(alias="X-Command-ID")):

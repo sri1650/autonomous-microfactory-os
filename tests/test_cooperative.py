@@ -49,3 +49,21 @@ def test_planning_failure_does_not_mutate_input_table():
     except ValueError:
         pass
     assert existing.vertices == before_vertices
+
+
+def test_goal_cell_remains_reserved_through_planning_horizon():
+    # r1 stops at (1,0). Without goal holding, r2 would wait one tick and then
+    # drive through r1's occupied final cell. The hardened planner must route
+    # r2 around via the lower row instead.
+    grid = Grid(3, 2)
+    plans, table = plan_cooperatively(
+        grid,
+        [
+            RobotPlanRequest("r1", (0, 0), (1, 0), priority=10),
+            RobotPlanRequest("r2", (2, 0), (0, 0), priority=5),
+        ],
+        max_time=10,
+    )
+    assert plans["r1"][-1] == (1, 0)
+    assert (1, 1) in plans["r2"]
+    assert all(table.vertices[((1, 0), t)] == "r1" for t in range(1, 11))

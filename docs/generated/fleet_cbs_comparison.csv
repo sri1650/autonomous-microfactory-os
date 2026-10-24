@@ -1,0 +1,7 @@
+scenario,planner,median_ms,p95_ms,sum_of_costs,makespan,conflict_free
+intersection_two,cooperative,0.04866300014327862,0.07157799973356305,9,5,True
+intersection_two,cbs,0.08130300011544023,0.21495500004675705,9,5,True
+corridor_with_bay,cooperative,0.053590999414154794,0.11907999942195602,10,6,True
+corridor_with_bay,cbs,0.38152200022523175,0.7105640006557223,10,6,True
+contention_four,cooperative,0.19211549988540355,0.31421499988937285,29,8,True
+contention_four,cbs,5.302381999626959,7.629756999449455,29,8,True

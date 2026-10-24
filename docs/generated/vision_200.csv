@@ -1,0 +1,2 @@
+samples,seed,mean_latency_ms,p95_latency_ms,mean_position_estimation_error_px,mean_angle_error_deg,pass,retry,fail,human_review
+200,3001,0.4531,0.4355,0.4570,0.1396,11,90,99,0

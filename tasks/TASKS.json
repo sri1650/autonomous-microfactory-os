@@ -362,7 +362,7 @@
       "python -m pytest -q tests/test_cbs.py"
     ],
     "objective": "Implement or justify deferring Conflict-Based Search based on benchmark value/complexity.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/fleet/cbs.py",

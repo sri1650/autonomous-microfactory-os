@@ -10,10 +10,10 @@ Read only these first:
 5. the files needed for the next task
 
 ## Current verified state
-- 80 Python tests pass locally.
+- 98 Python tests pass locally.
 - Completed task IDs are marked `status: done` in `tasks/TASKS.json`.
 - Existing Git history is intentional; preserve it.
-- Python architecture, simulation, fleet baseline, vision verification and agent-eval scaffolding are already implemented.
+- Python architecture, simulation, fleet/CBS planning, vision verification, replay core, Python trace correlation, pre-integration E2E skeleton and agent-eval scaffolding are already implemented.
 
 ## First action after reset
 Run the existing Python test suite. If green, do not modify it.
@@ -25,8 +25,8 @@ Use Standard speed / minimum reasoning sufficient for the task. Escalate only if
 ## Priority after Rust
 1. M3-T01..T05 Rust/gRPC
 2. M5-T02 OR-Tools CP-SAT + M5-T03 benchmark
-3. M7 persistence/observability/replay
-4. M9 E2E integration
+3. M7 live persistence/observability integration (schema/adapters/replay core are already prepared)
+4. M9 replace the prepared Python vertical slice with Rust/CP-SAT/Postgres/telemetry boundaries
 5. M10 measured-evidence documentation
 
 ## Hard rules

@@ -8,7 +8,9 @@ _JOB_TRANSITIONS = {
     JobState.PLANNING: {JobState.RUNNING, JobState.FAILED, JobState.CANCELLED},
     JobState.RUNNING: {JobState.SUCCEEDED, JobState.FAILED, JobState.CANCELLED},
     JobState.SUCCEEDED: set(),
-    JobState.FAILED: set(),
+    # Explicit operator/service retry may reopen a failed job. The orchestrator
+    # only uses this transition when retrying a FAILED task.
+    JobState.FAILED: {JobState.RUNNING},
     JobState.CANCELLED: set(),
 }
 

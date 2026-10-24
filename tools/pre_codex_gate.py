@@ -23,7 +23,7 @@ def main():
     args=ap.parse_args()
 
     checks=[
-        run("pytest",[sys.executable,"-m","pytest","-q"],timeout=120),
+        run("pytest",[sys.executable,"-m","pytest","-q","-p","no:cacheprovider"],timeout=120),
         run("compileall",[sys.executable,"-m","compileall","-q","src","tests","apps"],timeout=60),
         run("job_dsl",[sys.executable,"tools/microfactory.py","validate-job","scenarios/jobs/pcb_batch_104.yaml"],timeout=30),
         run("scheduler_baselines",[sys.executable,"benchmarks/scheduler/baselines.py"],timeout=30),

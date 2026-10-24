@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package microfactory.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message Pose2D {
+  double x = 1;
+  double y = 2;
+  double yaw = 3;
+}
+
+enum RobotMode {
+  ROBOT_MODE_UNSPECIFIED = 0;
+  ROBOT_MODE_OFFLINE = 1;
+  ROBOT_MODE_IDLE = 2;
+  ROBOT_MODE_HOMING = 3;
+  ROBOT_MODE_READY = 4;
+  ROBOT_MODE_EXECUTING = 5;
+  ROBOT_MODE_PAUSED = 6;
+  ROBOT_MODE_FAULTED = 7;
+  ROBOT_MODE_ESTOP = 8;
+}
+
+message RobotCommand {
+  string command_id = 1;
+  string correlation_id = 2;
+  string robot_id = 3;
+  string kind = 4;
+  google.protobuf.Timestamp deadline = 5;
+  bytes payload_json = 6;
+}
+
+enum CommandDisposition {
+  COMMAND_DISPOSITION_UNSPECIFIED = 0;
+  COMMAND_DISPOSITION_ACCEPTED = 1;
+  COMMAND_DISPOSITION_REJECTED = 2;
+}
+
+message CommandAck {
+  string command_id = 1;
+  CommandDisposition disposition = 2;
+  string reason = 3;
+}
+
+enum CommandTerminalState {
+  COMMAND_TERMINAL_STATE_UNSPECIFIED = 0;
+  COMMAND_TERMINAL_STATE_SUCCEEDED = 1;
+  COMMAND_TERMINAL_STATE_FAILED = 2;
+  COMMAND_TERMINAL_STATE_TIMED_OUT = 3;
+  COMMAND_TERMINAL_STATE_CANCELLED = 4;
+}
+
+message CommandResult {
+  string command_id = 1;
+  CommandTerminalState state = 2;
+  string detail = 3;
+}
+
+message RobotStatus {
+  string robot_id = 1;
+  RobotMode mode = 2;
+  Pose2D pose = 3;
+  double battery_fraction = 4;
+  string active_command_id = 5;
+  repeated string faults = 6;
+  google.protobuf.Timestamp heartbeat_time = 7;
+}
+
+service RobotRuntime {
+  rpc SubmitCommand(RobotCommand) returns (CommandAck);
+  rpc GetStatus(RobotStatusRequest) returns (RobotStatus);
+}
+
+message RobotStatusRequest {
+  string robot_id = 1;
+}

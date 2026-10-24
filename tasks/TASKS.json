@@ -1,0 +1,734 @@
+[
+  {
+    "id": "M1-T01",
+    "title": "Harden domain DAG/state model",
+    "verify": [
+      "python -m pytest -q tests/test_domain.py"
+    ],
+    "objective": "Add explicit task transition helpers, job terminal-state derivation, duplicate task ID safeguards and tests.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/domain/**",
+      "tests/test_domain.py"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "M1-T02",
+    "title": "Define repository interfaces",
+    "verify": [
+      "python -m pytest -q tests/test_repositories.py"
+    ],
+    "objective": "Define Protocol interfaces for JobRepository, ResourceRepository and EventSink without database dependencies.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/domain/repositories.py",
+      "tests/test_repositories.py"
+    ],
+    "dependencies": [
+      "M1-T01"
+    ]
+  },
+  {
+    "id": "M1-T03",
+    "title": "Implement in-memory repositories",
+    "verify": [
+      "python -m pytest -q tests/test_memory_repositories.py"
+    ],
+    "objective": "Implement deterministic in-memory repositories for service tests.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/adapters/memory/**",
+      "tests/test_memory_repositories.py"
+    ],
+    "dependencies": [
+      "M1-T02"
+    ]
+  },
+  {
+    "id": "M1-T04",
+    "title": "Implement orchestrator core",
+    "verify": [
+      "python -m pytest -q tests/test_orchestrator.py"
+    ],
+    "objective": "Create job submission, ready-task progression, retry/cancel and idempotent state-update logic independent of web/database frameworks.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/orchestrator/**",
+      "tests/test_orchestrator.py"
+    ],
+    "dependencies": [
+      "M1-T03"
+    ]
+  },
+  {
+    "id": "M1-T05",
+    "title": "Add FastAPI boundary",
+    "verify": [
+      "python -m pytest -q tests/test_factory_api.py"
+    ],
+    "objective": "Expose create/get/cancel job endpoints as a thin adapter over orchestrator interfaces.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "apps/factory_api/**",
+      "tests/test_factory_api.py"
+    ],
+    "dependencies": [
+      "M1-T04"
+    ]
+  },
+  {
+    "id": "M2-T01",
+    "title": "Define deterministic simulation clock/events",
+    "verify": [
+      "python -m pytest -q tests/test_sim_clock.py"
+    ],
+    "objective": "Implement logical tick clock and ordered immutable simulation events.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/sim/clock.py",
+      "src/microfactory/sim/events.py",
+      "tests/test_sim_clock.py"
+    ],
+    "dependencies": [
+      "M1-T04"
+    ]
+  },
+  {
+    "id": "M2-T02",
+    "title": "Implement factory world model",
+    "verify": [
+      "python -m pytest -q tests/test_sim_world.py"
+    ],
+    "objective": "Represent cells, stations, resources and robot poses with deterministic update semantics.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/sim/world.py",
+      "tests/test_sim_world.py"
+    ],
+    "dependencies": [
+      "M2-T01"
+    ]
+  },
+  {
+    "id": "M2-T03",
+    "title": "Implement simulated machine adapter",
+    "verify": [
+      "python -m pytest -q tests/test_sim_machines.py"
+    ],
+    "objective": "Simulate machine busy/ready/faulted execution with seeded duration/failure policy.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/sim/machines.py",
+      "tests/test_sim_machines.py"
+    ],
+    "dependencies": [
+      "M2-T02"
+    ]
+  },
+  {
+    "id": "M2-T04",
+    "title": "Implement scenario loader",
+    "verify": [
+      "python -m pytest -q tests/test_scenarios.py"
+    ],
+    "objective": "Load versioned JSON/YAML scenarios with explicit seed and validate schema.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/sim/scenario.py",
+      "scenarios/**",
+      "tests/test_scenarios.py"
+    ],
+    "dependencies": [
+      "M2-T03"
+    ]
+  },
+  {
+    "id": "M2-T05",
+    "title": "Deterministic event digest test",
+    "verify": [
+      "python -m pytest -q tests/test_sim_determinism.py"
+    ],
+    "objective": "Prove same scenario+seed yields identical ordered event digest.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/sim/**",
+      "tests/test_sim_determinism.py"
+    ],
+    "dependencies": [
+      "M2-T04"
+    ]
+  },
+  {
+    "id": "M3-T01",
+    "title": "Compile Rust state-machine scaffold",
+    "verify": [
+      "cargo fmt --all -- --check",
+      "cargo clippy --workspace --all-targets -- -D warnings",
+      "cargo test --workspace"
+    ],
+    "objective": "Make the prepared Rust state machine compile cleanly and align states with protobuf contracts.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "rust/robot_runtime/**",
+      "Cargo.toml"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "M3-T02",
+    "title": "Add typed command lifecycle",
+    "verify": [
+      "cargo test -p robot_runtime"
+    ],
+    "objective": "Add command ID, accepted/rejected, terminal result and duplicate-command idempotency semantics.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "rust/robot_runtime/**"
+    ],
+    "dependencies": [
+      "M3-T01"
+    ]
+  },
+  {
+    "id": "M3-T03",
+    "title": "Add watchdog/heartbeat model",
+    "verify": [
+      "cargo test -p robot_runtime"
+    ],
+    "objective": "Add monotonic heartbeat/watchdog logic as pure testable types before async networking.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "rust/robot_runtime/**"
+    ],
+    "dependencies": [
+      "M3-T02"
+    ]
+  },
+  {
+    "id": "M3-T04",
+    "title": "Generate gRPC bindings",
+    "verify": [
+      "cargo test --workspace",
+      "python -m pytest -q"
+    ],
+    "objective": "Wire protobuf generation for Rust and Python with one schema source.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "contracts/proto/**",
+      "rust/robot_runtime/**",
+      "python generated-contract package/**"
+    ],
+    "dependencies": [
+      "M3-T02"
+    ]
+  },
+  {
+    "id": "M3-T05",
+    "title": "Implement Rust gRPC runtime service",
+    "verify": [
+      "cargo test --workspace"
+    ],
+    "objective": "Expose SubmitCommand/GetStatus and preserve idempotency/state validation.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "rust/robot_runtime/**",
+      "tests/integration/runtime/**"
+    ],
+    "dependencies": [
+      "M3-T03",
+      "M3-T04"
+    ]
+  },
+  {
+    "id": "M4-T01",
+    "title": "Harden A* baseline",
+    "verify": [
+      "python -m pytest -q tests/test_grid.py"
+    ],
+    "objective": "Add deterministic tie-breaking, path-cost helpers and benchmark fixtures.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/fleet/grid.py",
+      "tests/test_grid.py"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "M4-T02",
+    "title": "Harden reservation table",
+    "verify": [
+      "python -m pytest -q tests/test_reservations.py"
+    ],
+    "objective": "Cover vertex, edge-swap, wait action and release-after-time semantics.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/fleet/reservations.py",
+      "tests/test_reservations.py"
+    ],
+    "dependencies": [
+      "M4-T01"
+    ]
+  },
+  {
+    "id": "M4-T03",
+    "title": "Implement time-expanded planner",
+    "verify": [
+      "python -m pytest -q tests/test_time_astar.py"
+    ],
+    "objective": "Plan (x,y,t) paths respecting reservations and wait actions.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/fleet/time_astar.py",
+      "tests/test_time_astar.py"
+    ],
+    "dependencies": [
+      "M4-T02"
+    ]
+  },
+  {
+    "id": "M4-T04",
+    "title": "Implement cooperative multi-robot planner",
+    "verify": [
+      "python -m pytest -q tests/test_cooperative.py"
+    ],
+    "objective": "Plan robots in deterministic priority order and prevent vertex/edge conflicts.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/fleet/cooperative.py",
+      "tests/test_cooperative.py"
+    ],
+    "dependencies": [
+      "M4-T03"
+    ]
+  },
+  {
+    "id": "M4-T05",
+    "title": "Deadlock/congestion scenarios",
+    "verify": [
+      "python -m pytest -q tests/test_fleet_scenarios.py"
+    ],
+    "objective": "Create corridor/intersection/contention scenarios and explicit expected behavior.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "scenarios/fleet/**",
+      "tests/test_fleet_scenarios.py"
+    ],
+    "dependencies": [
+      "M4-T04"
+    ]
+  },
+  {
+    "id": "M4-T06",
+    "title": "Fleet planner benchmark harness",
+    "verify": [
+      "python benchmarks/fleet/run.py --robots 5 --seed 1",
+      "python benchmarks/fleet/run.py --robots 20 --seed 1"
+    ],
+    "objective": "Emit CSV metrics for planner time, path stretch, conflicts and completion.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "benchmarks/fleet/**"
+    ],
+    "dependencies": [
+      "M4-T05"
+    ]
+  },
+  {
+    "id": "M4-T07",
+    "title": "Evaluate CBS planner",
+    "verify": [
+      "python -m pytest -q tests/test_cbs.py"
+    ],
+    "objective": "Implement or justify deferring Conflict-Based Search based on benchmark value/complexity.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/fleet/cbs.py",
+      "tests/test_cbs.py",
+      "benchmarks/fleet/**"
+    ],
+    "dependencies": [
+      "M4-T06"
+    ]
+  },
+  {
+    "id": "M5-T01",
+    "title": "FIFO scheduler baseline",
+    "verify": [
+      "python -m pytest -q tests/test_scheduler_fifo.py"
+    ],
+    "objective": "Assign ready tasks by priority/creation order while respecting resource capability/availability.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/scheduler/**",
+      "tests/test_scheduler_fifo.py"
+    ],
+    "dependencies": [
+      "M1-T04"
+    ]
+  },
+  {
+    "id": "M5-T02",
+    "title": "OR-Tools CP-SAT scheduler",
+    "verify": [
+      "python -m pytest -q tests/test_scheduler_ortools.py"
+    ],
+    "objective": "Optimise a constrained schedule with dependencies, durations and resource capacity.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/scheduler/**",
+      "tests/test_scheduler_ortools.py"
+    ],
+    "dependencies": [
+      "M5-T01"
+    ]
+  },
+  {
+    "id": "M5-T03",
+    "title": "Scheduler benchmark",
+    "verify": [
+      "python benchmarks/scheduler/run.py --seed 1"
+    ],
+    "objective": "Compare FIFO vs CP-SAT on makespan, lateness and compute time.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "benchmarks/scheduler/**",
+      "scenarios/scheduler/**"
+    ],
+    "dependencies": [
+      "M5-T02"
+    ]
+  },
+  {
+    "id": "M6-T01",
+    "title": "Vision contract and deterministic fixtures",
+    "verify": [
+      "python -m pytest -q tests/test_vision_contracts.py"
+    ],
+    "objective": "Define observation/decision types and synthetic fixture conventions.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/vision/contracts.py",
+      "tests/fixtures/vision/**",
+      "tests/test_vision_contracts.py"
+    ],
+    "dependencies": []
+  },
+  {
+    "id": "M6-T02",
+    "title": "Fiducial/alignment baseline",
+    "verify": [
+      "python -m pytest -q tests/test_vision_alignment.py"
+    ],
+    "objective": "Implement deterministic OpenCV alignment on synthetic fixtures with error metrics.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/vision/alignment.py",
+      "tests/test_vision_alignment.py"
+    ],
+    "dependencies": [
+      "M6-T01"
+    ]
+  },
+  {
+    "id": "M6-T03",
+    "title": "Pick/placement verification policy",
+    "verify": [
+      "python -m pytest -q tests/test_vision_verification.py"
+    ],
+    "objective": "Implement PASS/RETRY/FAIL/HUMAN_REVIEW thresholds separated from detector implementation.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/vision/verification.py",
+      "tests/test_vision_verification.py"
+    ],
+    "dependencies": [
+      "M6-T02"
+    ]
+  },
+  {
+    "id": "M6-T04",
+    "title": "ONNX detector adapter",
+    "verify": [
+      "python -m pytest -q tests/test_onnx_adapter.py"
+    ],
+    "objective": "Add injectable ONNX Runtime boundary with deterministic fake session tests.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/vision/onnx_adapter.py",
+      "tests/test_onnx_adapter.py"
+    ],
+    "dependencies": [
+      "M6-T03"
+    ]
+  },
+  {
+    "id": "M6-T05",
+    "title": "Vision latency/accuracy benchmark",
+    "verify": [
+      "python benchmarks/vision/run.py"
+    ],
+    "objective": "Produce machine-readable latency/decision metrics; do not claim accuracy without labelled fixtures.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "benchmarks/vision/**"
+    ],
+    "dependencies": [
+      "M6-T04"
+    ]
+  },
+  {
+    "id": "M7-T01",
+    "title": "PostgreSQL schema/migrations",
+    "verify": [
+      "python -m pytest -q tests/integration/postgres"
+    ],
+    "objective": "Persist jobs, tasks, resources, command identity and transactional state changes.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "db/**",
+      "src/microfactory/adapters/postgres/**",
+      "tests/integration/postgres/**"
+    ],
+    "dependencies": [
+      "M1-T02"
+    ]
+  },
+  {
+    "id": "M7-T02",
+    "title": "OpenTelemetry trace plumbing",
+    "verify": [
+      "python -m pytest -q tests/integration/telemetry"
+    ],
+    "objective": "Propagate correlation/trace identity through job->task->runtime boundaries.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/telemetry/**",
+      "apps/factory_api/**",
+      "rust/robot_runtime/**",
+      "tests/integration/telemetry/**"
+    ],
+    "dependencies": [
+      "M1-T05",
+      "M3-T05"
+    ]
+  },
+  {
+    "id": "M7-T03",
+    "title": "ClickHouse telemetry sink",
+    "verify": [
+      "python -m pytest -q tests/integration/clickhouse"
+    ],
+    "objective": "Store/query high-volume events separately from transactional state.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "telemetry/**",
+      "src/microfactory/telemetry/**",
+      "tests/integration/clickhouse/**"
+    ],
+    "dependencies": [
+      "M7-T02"
+    ]
+  },
+  {
+    "id": "M7-T04",
+    "title": "Deterministic trace replay",
+    "verify": [
+      "python -m pytest -q tests/test_replay.py"
+    ],
+    "objective": "Reconstruct ordered factory/job state from recorded events and compare digest.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/replay/**",
+      "tests/test_replay.py"
+    ],
+    "dependencies": [
+      "M2-T05",
+      "M7-T03"
+    ]
+  },
+  {
+    "id": "M8-T01",
+    "title": "Synthetic fault corpus",
+    "verify": [
+      "python evals/faults/validate_dataset.py"
+    ],
+    "objective": "Create versioned synthetic fault cases with expected diagnosis categories and safe allowed actions.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "evals/faults/**"
+    ],
+    "dependencies": [
+      "M2-T05",
+      "M7-T04"
+    ]
+  },
+  {
+    "id": "M8-T02",
+    "title": "Diagnostic-agent schema and guardrails",
+    "verify": [
+      "python -m pytest -q tests/test_agent_guardrails.py"
+    ],
+    "objective": "Accept structured evidence and emit bounded hypotheses/actions that cannot bypass deterministic command validation.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "src/microfactory/agent/**",
+      "tests/test_agent_guardrails.py"
+    ],
+    "dependencies": [
+      "M8-T01"
+    ]
+  },
+  {
+    "id": "M8-T03",
+    "title": "Agent evaluation harness",
+    "verify": [
+      "python evals/agent/run.py --fixture-mode"
+    ],
+    "objective": "Measure diagnosis accuracy, unsafe recommendation rate and abstention on synthetic faults.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "evals/agent/**"
+    ],
+    "dependencies": [
+      "M8-T02"
+    ]
+  },
+  {
+    "id": "M9-T01",
+    "title": "End-to-end golden scenario",
+    "verify": [
+      "python -m pytest -q tests/e2e"
+    ],
+    "objective": "Run three concurrent jobs through scheduling, mover routing, simulated machine execution and vision result to terminal state.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "tests/e2e/**",
+      "scenarios/e2e/**"
+    ],
+    "dependencies": [
+      "M2-T05",
+      "M3-T05",
+      "M4-T06",
+      "M5-T03",
+      "M6-T05",
+      "M7-T04"
+    ]
+  },
+  {
+    "id": "M9-T02",
+    "title": "Failure/recovery e2e scenario",
+    "verify": [
+      "python -m pytest -q tests/e2e"
+    ],
+    "objective": "Inject blocked aisle + failed vision pick + heartbeat loss and verify bounded recovery/failure semantics.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "tests/e2e/**",
+      "scenarios/e2e/**"
+    ],
+    "dependencies": [
+      "M9-T01"
+    ]
+  },
+  {
+    "id": "M9-T03",
+    "title": "Performance report generator",
+    "verify": [
+      "python benchmarks/report.py"
+    ],
+    "objective": "Generate CSV/Markdown summary from measured scheduler/fleet/runtime metrics.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "benchmarks/**",
+      "docs/generated/**"
+    ],
+    "dependencies": [
+      "M9-T02"
+    ]
+  },
+  {
+    "id": "M10-T01",
+    "title": "Recruiter README finalisation",
+    "verify": [],
+    "objective": "Replace planned claims with links to measured evidence; include concise architecture and demo instructions.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "README.md",
+      "docs/assets/**"
+    ],
+    "dependencies": [
+      "M9-T03"
+    ]
+  },
+  {
+    "id": "M10-T02",
+    "title": "Demo capture checklist",
+    "verify": [],
+    "objective": "Create exact commands/scenes/screens to record a 3-minute demo.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "docs/demo_plan.md",
+      "docs/demo_checklist.md"
+    ],
+    "dependencies": [
+      "M10-T01"
+    ]
+  },
+  {
+    "id": "M10-T03",
+    "title": "Interview pack",
+    "verify": [],
+    "objective": "Create architecture tradeoff Q&A, algorithms explanation, failure stories and honest limitations.",
+    "status": "todo",
+    "max_repair_attempts": 2,
+    "allowed_paths": [
+      "docs/interview/**"
+    ],
+    "dependencies": [
+      "M10-T01"
+    ]
+  }
+]

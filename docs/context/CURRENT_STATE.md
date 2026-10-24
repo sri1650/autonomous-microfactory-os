@@ -3,8 +3,8 @@
 ## Verification baseline
 
 - Python test suite: **140 passing tests**
-- Formal task graph: **30/43 complete**
-- Formal tasks remaining: M3-T05, M5-T02, M5-T03, M7-T01, M7-T02, M7-T03, M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
+- Formal task graph: **31/43 complete**
+- Formal tasks remaining: M5-T02, M5-T03, M7-T01, M7-T02, M7-T03, M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -98,15 +98,14 @@ These are local software/simulation measurements only.
 
 Do not spend time redesigning completed Python modules.
 
-1. M3-T05 — Rust gRPC service
-2. M5-T02 — actual OR-Tools CP-SAT solve implementation
-3. M5-T03 — final FIFO/heuristic/CP-SAT benchmark comparison
-4. M7-T01 — live psycopg/PostgreSQL container integration, restart/idempotency validation
-5. M7-T02 — Rust/gRPC trace-context propagation and full integration trace tests
-6. M7-T03 — live ClickHouse server/client integration and queries
-7. M7-T04 — persisted cross-service deterministic replay
-8. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
-9. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
+1. M5-T02 — actual OR-Tools CP-SAT solve implementation
+2. M5-T03 — final FIFO/heuristic/CP-SAT benchmark comparison
+3. M7-T01 — live psycopg/PostgreSQL container integration, restart/idempotency validation
+4. M7-T02 — Rust/gRPC trace-context propagation and full integration trace tests
+5. M7-T03 — live ClickHouse server/client integration and queries
+6. M7-T04 — persisted cross-service deterministic replay
+7. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
+8. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
 
 ## First command in Work
 
@@ -122,3 +121,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M3-T02 complete: typed accepted/rejected and terminal command lifecycle with duplicate-command idempotency passes 5 Rust tests and strict Clippy.
 - M3-T03 complete: monotonic heartbeat watchdog has deterministic healthy/expired boundary behavior and passes 8 Rust tests with strict Clippy.
 - M3-T04 complete: one Protobuf schema now generates Rust bindings at build time and reproducible Python bindings; 8 Rust and 140 Python tests pass.
+- M3-T05 complete: SubmitCommand/GetStatus Tonic service preserves robot identity and command idempotency; 10 unit tests plus 1 real localhost gRPC round-trip pass.

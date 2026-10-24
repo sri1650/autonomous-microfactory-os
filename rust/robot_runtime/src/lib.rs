@@ -5,6 +5,9 @@ pub mod proto {
     tonic::include_proto!("microfactory.v1");
 }
 
+mod service;
+pub use service::RuntimeService;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RobotMode {
     Offline,

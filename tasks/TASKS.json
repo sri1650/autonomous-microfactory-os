@@ -244,7 +244,7 @@
       "cargo test --workspace"
     ],
     "objective": "Expose SubmitCommand/GetStatus and preserve idempotency/state validation.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "rust/robot_runtime/**",

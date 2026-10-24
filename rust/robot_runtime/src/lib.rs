@@ -1,5 +1,10 @@
 use std::collections::BTreeMap;
 
+#[allow(clippy::result_large_err)]
+pub mod proto {
+    tonic::include_proto!("microfactory.v1");
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RobotMode {
     Offline,

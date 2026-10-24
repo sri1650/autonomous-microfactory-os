@@ -226,7 +226,7 @@
       "python -m pytest -q"
     ],
     "objective": "Wire protobuf generation for Rust and Python with one schema source.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "contracts/proto/**",

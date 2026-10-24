@@ -6,7 +6,7 @@
       "python -m pytest -q tests/test_domain.py"
     ],
     "objective": "Add explicit task transition helpers, job terminal-state derivation, duplicate task ID safeguards and tests.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/domain/**",
@@ -21,7 +21,7 @@
       "python -m pytest -q tests/test_repositories.py"
     ],
     "objective": "Define Protocol interfaces for JobRepository, ResourceRepository and EventSink without database dependencies.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/domain/repositories.py",
@@ -38,7 +38,7 @@
       "python -m pytest -q tests/test_memory_repositories.py"
     ],
     "objective": "Implement deterministic in-memory repositories for service tests.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/adapters/memory/**",
@@ -262,7 +262,7 @@
       "python -m pytest -q tests/test_grid.py"
     ],
     "objective": "Add deterministic tie-breaking, path-cost helpers and benchmark fixtures.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/fleet/grid.py",
@@ -277,7 +277,7 @@
       "python -m pytest -q tests/test_reservations.py"
     ],
     "objective": "Cover vertex, edge-swap, wait action and release-after-time semantics.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/fleet/reservations.py",

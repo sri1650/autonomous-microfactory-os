@@ -23,13 +23,23 @@ class Grid:
 
     def neighbors(self, cell: Cell) -> Iterable[Cell]:
         x, y = cell
-        for nxt in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+        # Fixed order is intentional; it is part of deterministic benchmark behaviour.
+        for nxt in ((x + 1, y), (x, y + 1), (x - 1, y), (x, y - 1)):
             if self.passable(nxt):
                 yield nxt
 
 
 def manhattan(a: Cell, b: Cell) -> int:
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+def path_cost(path: list[Cell]) -> int:
+    if not path:
+        raise ValueError("path must not be empty")
+    for left, right in zip(path, path[1:]):
+        if manhattan(left, right) != 1:
+            raise ValueError(f"non-adjacent path step: {left} -> {right}")
+    return len(path) - 1
 
 
 def astar(grid: Grid, start: Cell, goal: Cell) -> list[Cell]:
@@ -40,14 +50,17 @@ def astar(grid: Grid, start: Cell, goal: Cell) -> list[Cell]:
     if start == goal:
         return [start]
 
-    frontier: list[tuple[int, int, Cell]] = []
+    # (f_score, h_score, x, y, insertion_counter, cell) makes tie-breaking
+    # explicit and reproducible rather than relying on incidental heap order.
+    frontier: list[tuple[int, int, int, int, int, Cell]] = []
     counter = 0
-    heappush(frontier, (manhattan(start, goal), counter, start))
+    h0 = manhattan(start, goal)
+    heappush(frontier, (h0, h0, start[0], start[1], counter, start))
     came_from: dict[Cell, Cell | None] = {start: None}
     cost_so_far: dict[Cell, int] = {start: 0}
 
     while frontier:
-        _, _, current = heappop(frontier)
+        _, _, _, _, _, current = heappop(frontier)
         if current == goal:
             break
         for nxt in grid.neighbors(current):
@@ -55,8 +68,9 @@ def astar(grid: Grid, start: Cell, goal: Cell) -> list[Cell]:
             if new_cost < cost_so_far.get(nxt, inf):
                 cost_so_far[nxt] = new_cost
                 counter += 1
-                priority = new_cost + manhattan(nxt, goal)
-                heappush(frontier, (priority, counter, nxt))
+                h = manhattan(nxt, goal)
+                priority = new_cost + h
+                heappush(frontier, (priority, h, nxt[0], nxt[1], counter, nxt))
                 came_from[nxt] = current
 
     if goal not in came_from:

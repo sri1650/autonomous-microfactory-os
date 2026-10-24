@@ -35,6 +35,14 @@ class RobotMode(str, Enum):
     ESTOP = "ESTOP"
 
 
+class ResourceState(str, Enum):
+    OFFLINE = "OFFLINE"
+    AVAILABLE = "AVAILABLE"
+    RESERVED = "RESERVED"
+    BUSY = "BUSY"
+    FAULTED = "FAULTED"
+
+
 @dataclass(frozen=True, slots=True)
 class TaskDefinition:
     task_id: str
@@ -51,6 +59,26 @@ class TaskRecord:
     attempt: int = 0
     assigned_resource_id: str | None = None
 
+    def transition_to(self, target: TaskState) -> None:
+        """Apply one validated state transition.
+
+        The import is local so the transition table can remain isolated from
+        the domain data definitions without introducing an import cycle.
+        """
+        from .transitions import assert_task_transition
+
+        assert_task_transition(self.state, target)
+        self.state = target
+
+
+@dataclass(slots=True)
+class ResourceRecord:
+    resource_id: str
+    resource_type: str
+    state: ResourceState = ResourceState.AVAILABLE
+    capabilities: frozenset[str] = frozenset()
+    metadata: dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass(slots=True)
 class JobRecord:
@@ -61,7 +89,17 @@ class JobRecord:
 
     def validate_dag(self) -> None:
         task_ids = set(self.tasks)
-        for record in self.tasks.values():
+        definition_ids = [record.definition.task_id for record in self.tasks.values()]
+
+        if len(definition_ids) != len(set(definition_ids)):
+            raise ValueError("Task graph contains duplicate task IDs")
+
+        for key, record in self.tasks.items():
+            if record.definition.task_id != key:
+                raise ValueError(
+                    f"Task map key {key!r} does not match definition ID "
+                    f"{record.definition.task_id!r}"
+                )
             unknown = set(record.definition.dependencies) - task_ids
             if unknown:
                 raise ValueError(
@@ -82,7 +120,7 @@ class JobRecord:
             visiting.remove(task_id)
             visited.add(task_id)
 
-        for task_id in task_ids:
+        for task_id in sorted(task_ids):
             visit(task_id)
 
     def refresh_ready_tasks(self) -> list[str]:
@@ -92,6 +130,26 @@ class JobRecord:
             if record.state is not TaskState.PENDING:
                 continue
             if all(self.tasks[d].state is TaskState.SUCCEEDED for d in record.definition.dependencies):
-                record.state = TaskState.READY
+                record.transition_to(TaskState.READY)
                 newly_ready.append(task_id)
         return newly_ready
+
+    def derived_terminal_state(self) -> JobState | None:
+        """Return the job terminal state implied by terminal task states.
+
+        This method is intentionally pure: callers decide when to persist/apply
+        the returned state. A mixed SUCCEEDED/CANCELLED job is CANCELLED; any
+        failed task makes the completed job FAILED.
+        """
+        if not self.tasks:
+            return JobState.SUCCEEDED
+
+        terminal = {TaskState.SUCCEEDED, TaskState.FAILED, TaskState.CANCELLED}
+        states = {record.state for record in self.tasks.values()}
+        if not states.issubset(terminal):
+            return None
+        if TaskState.FAILED in states:
+            return JobState.FAILED
+        if TaskState.CANCELLED in states:
+            return JobState.CANCELLED
+        return JobState.SUCCEEDED

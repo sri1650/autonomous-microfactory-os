@@ -11,6 +11,8 @@ class ReservationTable:
     edges: dict[tuple[Cell, Cell, int], str] = field(default_factory=dict)
 
     def can_reserve(self, robot_id: str, path: list[Cell], start_time: int = 0) -> bool:
+        if start_time < 0:
+            raise ValueError("start_time must be non-negative")
         for index, cell in enumerate(path):
             t = start_time + index
             owner = self.vertices.get((cell, t))
@@ -19,6 +21,8 @@ class ReservationTable:
             if index == 0:
                 continue
             prev = path[index - 1]
+            # Opposite-direction use of the same edge at the same timestep is
+            # an edge-swap collision. Waiting (prev == cell) remains valid.
             reverse_owner = self.edges.get((cell, prev, t - 1))
             if reverse_owner is not None and reverse_owner != robot_id:
                 return False
@@ -39,3 +43,19 @@ class ReservationTable:
     def release_robot(self, robot_id: str) -> None:
         self.vertices = {key: owner for key, owner in self.vertices.items() if owner != robot_id}
         self.edges = {key: owner for key, owner in self.edges.items() if owner != robot_id}
+
+    def release_robot_after(self, robot_id: str, from_time: int) -> None:
+        """Release the robot's reservations whose occupancy occurs at/after from_time."""
+        if from_time < 0:
+            raise ValueError("from_time must be non-negative")
+        self.vertices = {
+            key: owner
+            for key, owner in self.vertices.items()
+            if not (owner == robot_id and key[1] >= from_time)
+        }
+        # Edge key time is departure time; the destination occupancy is t+1.
+        self.edges = {
+            key: owner
+            for key, owner in self.edges.items()
+            if not (owner == robot_id and key[2] + 1 >= from_time)
+        }

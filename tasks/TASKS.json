@@ -193,7 +193,7 @@
       "cargo test -p robot_runtime"
     ],
     "objective": "Add command ID, accepted/rejected, terminal result and duplicate-command idempotency semantics.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "rust/robot_runtime/**"

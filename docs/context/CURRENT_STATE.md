@@ -3,8 +3,8 @@
 ## Verification baseline
 
 - Python test suite: **140 passing tests**
-- Formal task graph: **27/43 complete**
-- Formal tasks remaining: M3-T02, M3-T03, M3-T04, M3-T05, M5-T02, M5-T03, M7-T01, M7-T02, M7-T03, M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
+- Formal task graph: **28/43 complete**
+- Formal tasks remaining: M3-T03, M3-T04, M3-T05, M5-T02, M5-T03, M7-T01, M7-T02, M7-T03, M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -98,7 +98,7 @@ These are local software/simulation measurements only.
 
 Do not spend time redesigning completed Python modules.
 
-1. M3-T02..M3-T05 — Rust lifecycle, heartbeat/watchdog, protobuf/gRPC service
+1. M3-T03..M3-T05 — Rust heartbeat/watchdog, protobuf/gRPC service
 2. M5-T02 — actual OR-Tools CP-SAT solve implementation
 3. M5-T03 — final FIFO/heuristic/CP-SAT benchmark comparison
 4. M7-T01 — live psycopg/PostgreSQL container integration, restart/idempotency validation
@@ -119,3 +119,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 ## Codex milestones
 
 - M3-T01 complete: Rust state-machine scaffold is formatted and passes workspace check, Clippy with warnings denied, and 2 Rust tests.
+- M3-T02 complete: typed accepted/rejected and terminal command lifecycle with duplicate-command idempotency passes 5 Rust tests and strict Clippy.

@@ -3,10 +3,13 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import FastAPI, Header, HTTPException, Request, status
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from microfactory.domain.models import JobRecord, TaskDefinition, TaskRecord
 from microfactory.orchestrator import Orchestrator
+from apps.factory_api.dashboard import dashboard_html, demo_snapshot
+from apps.factory_api.time_machine import demo_replay, time_machine_html
 
 
 class TaskInput(BaseModel):
@@ -65,6 +68,22 @@ def create_app(orchestrator: Orchestrator, *, tracer=None) -> FastAPI:
     def healthz():
         return {"status": "ok", "service": "factory-api", "version": "0.1.0"}
 
+    @app.get("/dashboard", response_class=HTMLResponse)
+    def dashboard():
+        return dashboard_html()
+
+    @app.get("/demo/snapshot")
+    def demo_snapshot_endpoint():
+        return demo_snapshot()
+
+    @app.get("/time-machine", response_class=HTMLResponse)
+    def time_machine():
+        return time_machine_html()
+
+    @app.get("/demo/replay")
+    def demo_replay_endpoint():
+        return demo_replay()
+
     @app.get("/capabilities")
     def capabilities():
         return {
@@ -118,6 +137,16 @@ def create_app(orchestrator: Orchestrator, *, tracer=None) -> FastAPI:
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         return _job_payload(job)
+
+    @app.post("/jobs/{job_id}/tasks/{task_id}/retry")
+    def retry_task(job_id: str, task_id: str, x_command_id: str = Header(alias="X-Command-ID")):
+        try:
+            result = orchestrator.retry_task(job_id, task_id, command_id=x_command_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {"replayed": result.replayed, "job": _job_payload(result.job)}
 
     @app.post("/jobs/{job_id}/cancel")
     def cancel_job(job_id: str, x_command_id: str = Header(alias="X-Command-ID")):

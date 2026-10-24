@@ -65,3 +65,17 @@ def start_job_span(
     if command_id is not None:
         attributes["microfactory.command_id"] = command_id
     return tracer.start_as_current_span(name, attributes=attributes)
+
+
+def inject_trace_context(carrier: dict[str,str] | None = None) -> dict[str,str]:
+    """Inject current W3C trace context into a string carrier for RPC metadata."""
+    from opentelemetry.propagate import inject
+    out={} if carrier is None else dict(carrier)
+    inject(out)
+    return out
+
+
+def extract_trace_context(carrier: Mapping[str,str]):
+    """Extract W3C trace context for a downstream Python/Rust RPC boundary."""
+    from opentelemetry.propagate import extract
+    return extract(dict(carrier))

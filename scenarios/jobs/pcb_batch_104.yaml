@@ -1,0 +1,29 @@
+job: pcb_batch_104
+priority: 8
+tasks:
+  - id: transport_to_printer
+    kind: move
+    resource: mover
+    destination: printer_1
+    duration: 4
+  - id: print_solder
+    kind: print
+    resource: printer
+    depends_on: [transport_to_printer]
+    duration: 8
+    due_tick: 20
+  - id: inspect_print
+    kind: inspect
+    resource: vision
+    depends_on: [print_solder]
+    duration: 2
+  - id: component_place
+    kind: place
+    resource: gantry
+    depends_on: [inspect_print]
+    duration: 6
+  - id: final_inspection
+    kind: inspect
+    resource: vision
+    depends_on: [component_place]
+    duration: 2

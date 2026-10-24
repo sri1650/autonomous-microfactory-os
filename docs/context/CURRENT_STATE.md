@@ -24,22 +24,25 @@
 - `M1-T05` thin FastAPI create/get/cancel boundary complete
 - `M4-T05` adversarial intersection/corridor/contention fleet scenarios complete
 - `M4-T06` CSV fleet benchmark harness complete
+- `M6-T01` labelled vision contracts/fixture conventions complete
+- `M6-T02` deterministic OpenCV alignment baseline complete
+- `M6-T03` PASS/RETRY/FAIL/HUMAN_REVIEW verification policy complete
+- `M6-T04` injectable lazy ONNX adapter boundary + fake-session tests complete
+- `M6-T05` machine-readable synthetic vision benchmark complete
 - 20-case synthetic fault corpus, failure matrix, benchmark catalog and four ADRs prepared
 - CircuitHub-oriented interview pack and portfolio evidence plan prepared
 - GitHub profile repositioned around production robotics/software
 - Rust state-machine scaffold written but not locally compiled (Rust toolchain unavailable in this preparation environment)
 
 ## Verified locally
-- 62 Python tests passing
+- 76 Python tests passing
 - Python compileall passing
 - synthetic fault corpus parses and validates structurally
 
 ## Next low-risk tasks that can be done without Codex
-1. `M6-T01` vision contracts/fixtures
-2. `M6-T02` deterministic OpenCV alignment baseline
-3. `M6-T03` vision decision policy
-4. `M6-T04` ONNX adapter if runtime support is available
-5. `M6-T05` vision benchmark harness
+1. `M8-T01` validate synthetic fault corpus
+2. `M8-T02` diagnostic-agent schema + deterministic action guardrails
+3. `M8-T03` fixture-mode agent evaluation harness
 
 ## Tasks to reserve for Work/Codex after reset
 - Rust compile/gRPC/concurrency integration

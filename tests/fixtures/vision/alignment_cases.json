@@ -1,0 +1,6 @@
+[
+  {"id":"nominal","image_size":[240,320],"center":[160,120],"size":[100,36],"angle_deg":0,"expected_center":[160,120],"expected_angle_deg":0},
+  {"id":"shifted","image_size":[240,320],"center":[167,116],"size":[100,36],"angle_deg":0,"expected_center":[160,120],"expected_angle_deg":0},
+  {"id":"rotated","image_size":[240,320],"center":[160,120],"size":[110,30],"angle_deg":28,"expected_center":[160,120],"expected_angle_deg":28},
+  {"id":"shifted_rotated","image_size":[240,320],"center":[151,128],"size":[120,32],"angle_deg":-21,"expected_center":[160,120],"expected_angle_deg":-21}
+]

@@ -7,10 +7,11 @@ name = "autonomous-microfactory-os"
 version = "0.1.0"
 description = "Portfolio-grade autonomous microfactory orchestration and robotics software"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.115", "PyYAML>=6.0"]
+dependencies = ["fastapi>=0.115", "PyYAML>=6.0", "numpy>=2.0", "opencv-python-headless>=4.10"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+vision = ["onnxruntime>=1.20"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

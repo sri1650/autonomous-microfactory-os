@@ -431,7 +431,7 @@
       "python -m pytest -q tests/test_vision_contracts.py"
     ],
     "objective": "Define observation/decision types and synthetic fixture conventions.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/vision/contracts.py",
@@ -447,7 +447,7 @@
       "python -m pytest -q tests/test_vision_alignment.py"
     ],
     "objective": "Implement deterministic OpenCV alignment on synthetic fixtures with error metrics.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/vision/alignment.py",
@@ -464,7 +464,7 @@
       "python -m pytest -q tests/test_vision_verification.py"
     ],
     "objective": "Implement PASS/RETRY/FAIL/HUMAN_REVIEW thresholds separated from detector implementation.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/vision/verification.py",
@@ -481,7 +481,7 @@
       "python -m pytest -q tests/test_onnx_adapter.py"
     ],
     "objective": "Add injectable ONNX Runtime boundary with deterministic fake session tests.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/vision/onnx_adapter.py",
@@ -498,7 +498,7 @@
       "python benchmarks/vision/run.py"
     ],
     "objective": "Produce machine-readable latency/decision metrics; do not claim accuracy without labelled fixtures.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "benchmarks/vision/**"

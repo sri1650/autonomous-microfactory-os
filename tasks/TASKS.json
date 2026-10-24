@@ -588,7 +588,7 @@
       "python evals/faults/validate_dataset.py"
     ],
     "objective": "Create versioned synthetic fault cases with expected diagnosis categories and safe allowed actions.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "evals/faults/**"
@@ -605,7 +605,7 @@
       "python -m pytest -q tests/test_agent_guardrails.py"
     ],
     "objective": "Accept structured evidence and emit bounded hypotheses/actions that cannot bypass deterministic command validation.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/agent/**",
@@ -622,7 +622,7 @@
       "python evals/agent/run.py --fixture-mode"
     ],
     "objective": "Measure diagnosis accuracy, unsafe recommendation rate and abstention on synthetic faults.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "evals/agent/**"

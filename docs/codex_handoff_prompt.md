@@ -1,25 +1,39 @@
-# Codex / Work handoff prompt
+# Work/Codex Resume Prompt — Credit-Efficient
 
-Continue `autonomous-microfactory-os` from the prepared scaffold.
+Continue the existing `autonomous-microfactory-os` repository. Do **not** redesign or regenerate completed Python work.
 
-Do not redesign the system before reading `AGENTS.md` and `docs/context/*`.
+Read only these first:
+1. `AGENTS.md`
+2. `docs/context/CURRENT_STATE.md`
+3. `docs/context/ARCHITECTURE.md`
+4. `tasks/TASKS.json`
+5. the files needed for the next task
 
-Use `tasks/TASKS.json` as the source of implementation work. Execute tasks in dependency order. Work on one task at a time. For each task:
-1. read only the context files required by `AGENTS.md`;
-2. inspect only the task's `allowed_paths` plus files required to understand imports;
-3. implement the smallest complete change;
-4. run the task's `verify` commands;
-5. make at most two repair attempts;
-6. update `docs/context/CURRENT_STATE.md` with verified evidence;
-7. commit with the task ID in the commit body.
+## Current verified state
+- 80 Python tests pass locally.
+- Completed task IDs are marked `status: done` in `tasks/TASKS.json`.
+- Existing Git history is intentional; preserve it.
+- Python architecture, simulation, fleet baseline, vision verification and agent-eval scaffolding are already implemented.
 
-Do not spend high-reasoning/model budget on formatting, boilerplate, test execution or documentation paraphrase. Use deterministic tools for those.
+## First action after reset
+Run the existing Python test suite. If green, do not modify it.
 
-When a milestone is complete, perform one architecture review using only:
-- architecture/context docs,
-- changed-file list/diff,
-- test/benchmark summary.
+Then attempt `M3-T01`: compile the prepared Rust state-machine scaffold.
 
-Never claim hardware validation. Preserve the distinction between unit-tested, integration-tested, simulation-validated and hardware-validated.
+Use Standard speed / minimum reasoning sufficient for the task. Escalate only if deterministic tool output shows a blocker.
 
-Start with the first incomplete task whose dependencies are complete.
+## Priority after Rust
+1. M3-T01..T05 Rust/gRPC
+2. M5-T02 OR-Tools CP-SAT + M5-T03 benchmark
+3. M7 persistence/observability/replay
+4. M9 E2E integration
+5. M10 measured-evidence documentation
+
+## Hard rules
+- one bounded task at a time
+- use `allowed_paths` from `tasks/TASKS.json`
+- run the task's exact `verify` commands
+- max two repair attempts before blocker escalation
+- no architecture rewrite unless a failing integration test proves a contradiction
+- do not claim hardware validation
+- do not replace deterministic tests with LLM judgement

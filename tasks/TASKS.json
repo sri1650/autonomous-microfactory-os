@@ -532,7 +532,7 @@
       "python -m pytest -q tests/integration/telemetry"
     ],
     "objective": "Propagate correlation/trace identity through job->task->runtime boundaries.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/telemetry/**",

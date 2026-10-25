@@ -692,7 +692,7 @@
     "title": "Recruiter README finalisation",
     "verify": [],
     "objective": "Replace planned claims with links to measured evidence; include concise architecture and demo instructions.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "README.md",

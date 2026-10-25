@@ -1,133 +1,104 @@
 # Autonomous Microfactory OS
 
-A portfolio-grade robotics software platform for simulating and orchestrating a small autonomous factory. It demonstrates software architecture, robot/device abstractions, scheduling, fleet coordination, vision verification, observability, deterministic simulation/replay, fault handling, and a low-level Rust runtime boundary.
+A deterministic robotics/factory orchestration portfolio project: Python owns jobs, scheduling, fleet planning, vision policy, persistence, telemetry and replay; a Rust/Tonic runtime owns the low-level robot command boundary.
 
-> **Validation boundary:** the Python platform and retained simulation/benchmark layers are unit/integration tested locally. Rust/gRPC, OR-Tools CP-SAT, live PostgreSQL/ClickHouse and final full-stack integration remain explicit milestones. No physical hardware, production deployment or safety certification is claimed.
+The project is locally verified with **153 Python tests** and **11 Rust tests**. Its golden scenario drives three concurrent jobs through CP-SAT scheduling, conflict-free mover routing, simulated vision, PostgreSQL persistence, three real Rust gRPC processes, ClickHouse telemetry and digest-checked replay.
 
-## Why this project exists
+> Scope: all evidence is local software, synthetic vision or simulation. This repository does not claim physical hardware validation, production deployment, production-scale load, functional-safety certification or safe control of real machinery.
 
-It complements the ROS 2 warehouse robot and vision-guided manipulator projects by focusing on the software architecture behind a **multi-machine / multi-robot factory**, not one robot.
+## What is implemented
 
-## Implemented pre-integration platform
-
-### Factory/domain
-- typed jobs/tasks/resources and legal state transitions
-- DAG validation and dependency readiness
-- idempotent command handling
-- explicit failed-task retry semantics
-- FastAPI job boundary, health/capability APIs and retry endpoint
-- YAML manufacturing job DSL
-
-### Fleet
-- A*
-- time-expanded A*
-- temporal reservations
-- cooperative multi-robot planning
-- Conflict-Based Search reference planner
-- persistent goal occupancy through planning horizon
-- robot health/battery-aware mission eligibility
-- deterministic stress generation
-
-### Scheduling
-- FIFO baseline
-- priority
-- shortest-processing-time (SPT)
-- earliest-due-date (EDD)
-- weighted heuristic
-- retained benchmark workload ready for CP-SAT comparison
-
-### Vision
-- deterministic OpenCV alignment
-- PASS / RETRY / FAIL / HUMAN_REVIEW policy
-- lazy ONNX inference boundary
-- synthetic benchmark fixtures
-
-### Reliability / observability
-- deterministic simulation clock and event digests
-- replay reconstruction + first-divergence debugging
-- replay timeline representation
-- Python OpenTelemetry trace/correlation plumbing
-- ClickHouse DDL/injectable sink boundary
-- PostgreSQL schema/migration preparation
-- deterministic fault schedules
-- 100-seed domain/scheduler invariant campaign
-
-### Portfolio/demo surfaces
-- `/dashboard` — simulation-preview factory dashboard
-- `/time-machine` — deterministic replay/failure timeline preview
-- CLI for job validation, fleet stress and fault schedule generation
-- measured benchmark reports under `docs/generated/`
+- Typed job/task/resource lifecycle with DAG validation, legal transitions and idempotent commands
+- Deterministic OR-Tools CP-SAT scheduler plus FIFO, priority, SPT, EDD and weighted baselines
+- A*, time-expanded A*, reservations, cooperative planning and CBS reference/escalation
+- Robot health, battery eligibility, heartbeat watchdog and bounded failure recovery
+- Rust/Tonic gRPC command runtime with accepted/rejected/terminal lifecycle and idempotency
+- PostgreSQL job persistence and command identity that survive process/database restart
+- Python-to-Rust W3C trace propagation and ClickHouse correlation timelines
+- OpenCV alignment, PASS/RETRY/FAIL/HUMAN_REVIEW policy and lazy ONNX boundary
+- Deterministic simulation, canonical event digests, first-divergence diagnosis and persisted cross-service replay
+- Golden and failure E2E scenarios, dashboard preview and replay/time-machine preview
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    API[Factory API / Dashboard] --> ORCH[Job Orchestrator]
-    ORCH --> SCH[Scheduler]
-    ORCH --> FLEET[Fleet Manager]
-    SCH --> DB[(PostgreSQL)]
-    FLEET --> PLAN[Cooperative A* / CBS]
-    PLAN --> RT[Robot Runtime - Rust/gRPC]
-    RT --> SIM[Factory Simulator]
-    VIS[Vision Verification] --> ORCH
-    ORCH --> OTEL[OpenTelemetry]
-    RT --> OTEL
-    VIS --> OTEL
-    OTEL --> CH[(ClickHouse)]
-    REPLAY[Deterministic Replay / Time Machine] --> CH
+    API[Factory API / Dashboard] --> O[Python Orchestrator]
+    O --> S[CP-SAT / Heuristics]
+    O --> F[Cooperative Fleet Planner]
+    O --> P[(PostgreSQL)]
+    F --> R[Rust gRPC Robot Runtimes]
+    R --> SIM[Deterministic Simulator]
+    V[Vision Verification] --> O
+    O --> T[W3C OpenTelemetry]
+    R --> T
+    T --> C[(ClickHouse)]
+    C --> RP[Persisted Replay / Time Machine]
 ```
 
-## Measured pre-integration evidence
+The split is intentional: Python keeps optimisation and integration iteration fast, while Rust isolates the command/watchdog boundary behind a typed protobuf contract.
 
-All values below are **local simulation/software measurements**, not production claims.
+## Measured evidence
 
-Retained multi-seed cooperative-planner runs currently cover 10, 25, 50, 75 and 100 robots. See:
+All figures are retained in [the final performance report](docs/generated/performance_report.md) and its adjacent CSV files.
 
-- `docs/generated/fleet_multiseed_100.csv`
-- `docs/generated/pre_codex_benchmarks.md`
-- `docs/generated/fleet_planner_evaluation.md`
+- Scheduler: every strategy reached a 39-tick makespan on the retained workload. CP-SAT weighted tardiness was **227**, versus **229** for the best heuristic (EDD); recorded CP-SAT compute time was **58.647 ms**.
+- Fleet: every retained multi-seed run through 100 simulated robots was conflict-free. p50 planning time ranged from **6.13 ms** at 10 robots to **1519.02 ms** at 100 robots.
+- Rust runtime, local loopback/100 samples: idempotent `SubmitCommand` p50/p95 **0.193/0.414 ms**; `GetStatus` **0.176/0.331 ms**.
+- Synthetic vision, 200 samples: mean latency **0.4531 ms**, mean position error **0.4570 px**, mean angle error **0.1396°**.
 
-The 40 retained multi-seed cases through 100 robots were conflict-free. On this runtime the median planning latency increased from single-digit milliseconds at 10 robots to roughly 1.5 seconds at 100 robots, which gives the project an explicit scalability trade-off to discuss and optimise.
+These numbers describe this development machine and workload, not an SLA.
 
-Scheduler baselines are retained in `docs/generated/scheduler_baselines.csv` so OR-Tools CP-SAT must be compared against deterministic heuristics rather than against no baseline.
+## Quick start
 
-## Run locally
+Requirements: Python 3.12+, Rust stable and Docker.
 
 ```bash
-python -m pytest -q
-python -m compileall -q src tests apps
-python tools/microfactory.py validate-job scenarios/jobs/pcb_batch_104.yaml
-python tools/microfactory.py stress --robots 50 --grid 40 --seed 3
-python tools/microfactory.py faults --robots 10 --count 10 --seed 7
+python3 -m venv .venv
+.venv/bin/pip install -e '.[dev]'
+.venv/bin/python -m pytest -q
+cargo test --workspace
 ```
 
-Run the pre-Codex quality gate:
+Run the deterministic software demo and regenerate the report:
 
 ```bash
-python tools/pre_codex_gate.py
-python tools/pre_codex_gate.py --full
+.venv/bin/python tools/microfactory.py validate-job scenarios/jobs/pcb_batch_104.yaml
+.venv/bin/python tools/microfactory.py stress --robots 50 --grid 40 --seed 3
+.venv/bin/python benchmarks/scheduler/run.py --output docs/generated/scheduler_comparison.csv
+.venv/bin/python benchmarks/report.py
 ```
 
-If running the FastAPI application, open:
+## Live integration and E2E
 
-```text
-/dashboard
-/time-machine
-/healthz
-/capabilities
+Start disposable local databases:
+
+```bash
+docker run --name microfactory-postgres-test -e POSTGRES_PASSWORD=microfactory -e POSTGRES_DB=microfactory -p 55432:5432 -d postgres:17-alpine
+docker run --name microfactory-clickhouse-test -e CLICKHOUSE_PASSWORD=microfactory -e CLICKHOUSE_DB=microfactory -p 58123:8123 -d clickhouse/clickhouse-server:25.8-alpine
 ```
 
-## What is deliberately left for Codex/Work
+Then run the live suites:
 
-1. compile and harden the Rust runtime
-2. typed command lifecycle + heartbeat/watchdog
-3. protobuf/gRPC generation and service integration
-4. OR-Tools CP-SAT scheduler and final benchmark comparison
-5. live PostgreSQL repository/integration tests
-6. Rust/cross-process OpenTelemetry propagation
-7. live ClickHouse integration/query tests
-8. persisted deterministic replay across the real service boundaries
-9. final golden/failure full-stack E2E
-10. final recruiter README/demo using only measured integrated evidence
+```bash
+MICROFACTORY_POSTGRES_DSN=postgresql://postgres:microfactory@127.0.0.1:55432/microfactory \
+MICROFACTORY_CLICKHOUSE_HOST=127.0.0.1 \
+MICROFACTORY_CLICKHOUSE_PORT=58123 \
+MICROFACTORY_CLICKHOUSE_DATABASE=microfactory \
+MICROFACTORY_CLICKHOUSE_PASSWORD=microfactory \
+.venv/bin/python -m pytest -q tests/integration tests/e2e
+```
 
-See `tasks/TASKS.json`, `docs/context/CURRENT_STATE.md`, and the Work handoff prompt.
+The migrations/table DDL are applied by the live test fixtures. The golden E2E starts three Rust runtimes on ephemeral loopback ports; the failure scenario proves blocked-aisle replanning, heartbeat-loss rejection and a one-retry vision recovery.
+
+## Repository guide
+
+- `src/microfactory/` — domain, orchestration, scheduling, fleet, vision, telemetry and replay
+- `rust/robot_runtime/` — Tonic runtime and watchdog
+- `contracts/proto/` — shared protobuf source
+- `db/migrations/` and `telemetry/clickhouse/` — live persistence schemas
+- `scenarios/` — deterministic jobs, simulations, benchmarks and E2E inputs
+- `tests/integration/` and `tests/e2e/` — real-boundary verification
+- `docs/generated/` — retained benchmark evidence
+- `docs/demo_checklist.md` — exact three-minute demo sequence
+- `docs/interview/` — architecture trade-offs, algorithms, failures and limitations

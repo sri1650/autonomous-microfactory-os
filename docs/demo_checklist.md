@@ -1,76 +1,69 @@
-# Microfactory OS Demo Capture Checklist
+# Demo Capture Checklist
 
-This checklist separates what can be recorded **now** from what must wait for the Rust/CP-SAT/database/telemetry integration.
+## One-time setup
 
-## Pre-integration evidence — recordable now
-
-### 1. Entire Python verification suite
 ```bash
-python -m pytest -q
-python -m compileall -q src tests
-```
-Capture: final passing test count.
-
-### 2. Three-job vertical slice
-```bash
-python -m pytest -q tests/e2e/test_python_vertical_slice.py -vv
-```
-Explain: three jobs are priority-scheduled, movers receive conflict-free routes, vision verification passes, and every job reaches `SUCCEEDED`.
-
-### 3. Failure/retry recovery
-```bash
-python -m pytest -q tests/e2e/test_retry_recovery_prework.py -vv
-```
-Explain: a failed final vision task puts the job into `FAILED`; an explicit retry safely reopens only that failed task/job, increments the attempt count, and allows eventual success.
-
-### 4. Fleet planner trade-off
-```bash
-python benchmarks/fleet/compare_suite.py --repeats 50
-```
-Show: cooperative A* and CBS produce conflict-free solutions on the adversarial scenarios; CBS is retained as a reference/escalation planner rather than the online default.
-
-### 5. 20-robot benchmark
-```bash
-python benchmarks/fleet/run.py --robots 20 --seed 1002 --size 40
-```
-Show: zero vertex conflicts / zero edge swaps in the retained benchmark case.
-
-### 6. Vision benchmark
-```bash
-python benchmarks/vision/run.py --samples 200 --seed 3001
-```
-Explain: deterministic fixture-based alignment and PASS/RETRY/FAIL policy; this is not a real camera/model accuracy claim.
-
-### 7. Replay integrity
-```bash
-python -m pytest -q tests/test_replay.py -vv
-```
-Explain: recorded simulation events are order-validated, replayed through machine state transitions, and checked against the original event digest.
-
-### 8. OpenTelemetry correlation
-```bash
-python -m pytest -q tests/integration/telemetry/test_tracing.py -vv
-```
-Explain: API request span identity reaches correlated domain events. Rust propagation remains pending.
-
-### 9. Regenerate the evidence report
-```bash
-python benchmarks/report.py
-cat docs/generated/performance_report.md
+python3 -m venv .venv
+.venv/bin/pip install -e '.[dev]'
+cargo build --workspace
+docker run --name microfactory-postgres-test -e POSTGRES_PASSWORD=microfactory -e POSTGRES_DB=microfactory -p 55432:5432 -d postgres:17-alpine
+docker run --name microfactory-clickhouse-test -e CLICKHOUSE_PASSWORD=microfactory -e CLICKHOUSE_DB=microfactory -p 58123:8123 -d clickhouse/clickhouse-server:25.8-alpine
 ```
 
-## Final 3-minute recruiter demo — capture after Work integration
+If the named containers already exist, use `docker start microfactory-postgres-test microfactory-clickhouse-test` instead of creating them again.
 
-1. `docker compose up` full stack: API, Postgres, ClickHouse, robot runtime and simulator.
-2. Submit three PCB-style jobs with distinct priorities.
-3. Show CP-SAT allocation and mover paths.
-4. Inject blocked aisle and show bounded replan.
-5. Inject failed visual pick and show retry/recovery.
-6. Drop robot heartbeat and show runtime safe degradation/unavailability.
-7. Open one OpenTelemetry trace from API through runtime/vision/recovery.
-8. Query the corresponding ClickHouse events by correlation ID.
-9. Replay the failed run and verify the deterministic digest.
-10. Finish on the benchmark/limitations section of the README.
+## Generate the two browser-ready preview screens
 
-## Recording rule
-Never imply physical factory or safety-certified validation. Say "simulated", "unit/integration tested", or "measured on the retained benchmark" exactly as supported by evidence.
+```bash
+.venv/bin/python -c "from pathlib import Path; from apps.factory_api.dashboard import dashboard_html; Path('/tmp/microfactory-dashboard.html').write_text(dashboard_html())"
+.venv/bin/python -c "from pathlib import Path; from apps.factory_api.time_machine import time_machine_html; Path('/tmp/microfactory-replay.html').write_text(time_machine_html())"
+open /tmp/microfactory-dashboard.html
+open /tmp/microfactory-replay.html
+```
+
+On Linux, replace `open` with `xdg-open`.
+
+## Exact live E2E command
+
+```bash
+MICROFACTORY_POSTGRES_DSN=postgresql://postgres:microfactory@127.0.0.1:55432/microfactory \
+MICROFACTORY_CLICKHOUSE_HOST=127.0.0.1 \
+MICROFACTORY_CLICKHOUSE_PORT=58123 \
+MICROFACTORY_CLICKHOUSE_DATABASE=microfactory \
+MICROFACTORY_CLICKHOUSE_PASSWORD=microfactory \
+.venv/bin/python -m pytest -q tests/e2e -vv
+```
+
+Expected: four E2E tests pass. Capture the command and final summary in one frame.
+
+## Exact focused failure command
+
+```bash
+.venv/bin/python -m pytest -q tests/e2e/test_failure_recovery.py -vv
+```
+
+Expected: one test passes. Explain the blocked aisle, heartbeat timeout and one-attempt vision recovery from the test name and source; do not imply a physical fault was injected.
+
+## Evidence/report command
+
+```bash
+.venv/bin/python benchmarks/report.py
+sed -n '1,220p' docs/generated/performance_report.md
+```
+
+## Screens to capture
+
+- README architecture diagram and scope notice
+- terminal with `4 passed` E2E result
+- dashboard with “SIMULATION PREVIEW” visible
+- time-machine failed and recovered vision frames
+- scheduler/fleet/runtime tables in the final report
+- final README scope statement
+
+## Recording quality gate
+
+- Hide tokens, passwords beyond the disposable local values above, personal paths and unrelated browser tabs.
+- Keep commands and results readable at 1080p.
+- Say “simulated”, “local integration test” and “retained benchmark” where applicable.
+- Do not claim hardware validation, deployment readiness, production throughput or safety certification.
+- Stop or remove the disposable containers after recording if they are no longer needed.

@@ -707,7 +707,7 @@
     "title": "Demo capture checklist",
     "verify": [],
     "objective": "Create exact commands/scenes/screens to record a 3-minute demo.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "docs/demo_plan.md",

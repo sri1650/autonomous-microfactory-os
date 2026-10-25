@@ -3,8 +3,8 @@
 ## Verification baseline
 
 - Python test suite: **153 passing tests**
-- Formal task graph: **41/43 complete**
-- Formal tasks remaining: M10-T02, M10-T03
+- Formal task graph: **42/43 complete**
+- Formal tasks remaining: M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -126,3 +126,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M9-T02 complete: deterministic failure E2E proves blocked-aisle detection/replanning, heartbeat-loss mission rejection/recovery, and a vision retry bounded to one attempt; all four E2E tests pass.
 - M9-T03 complete: final report retains scheduler, multi-seed fleet, synthetic vision, and 100-sample loopback Rust gRPC measurements alongside integration evidence and explicit scope limits.
 - M10-T01 complete: recruiter README now links only retained measurements, explains the architecture and trade-offs, provides exact local/live commands, and states the hardware/production/safety boundary.
+- M10-T02 complete: the three-minute demo has a timed narration, exact E2E/report/preview commands, expected results, capture shots, and an explicit recording truthfulness checklist.

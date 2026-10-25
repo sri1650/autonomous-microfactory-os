@@ -414,7 +414,7 @@
       "python benchmarks/scheduler/run.py --seed 1"
     ],
     "objective": "Compare FIFO vs CP-SAT on makespan, lateness and compute time.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "benchmarks/scheduler/**",

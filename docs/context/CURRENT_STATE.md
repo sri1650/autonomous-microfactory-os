@@ -3,8 +3,8 @@
 ## Verification baseline
 
 - Python test suite: **143 passing tests**
-- Formal task graph: **32/43 complete**
-- Formal tasks remaining: M5-T03, M7-T01, M7-T02, M7-T03, M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
+- Formal task graph: **33/43 complete**
+- Formal tasks remaining: M7-T01, M7-T02, M7-T03, M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -98,13 +98,12 @@ These are local software/simulation measurements only.
 
 Do not spend time redesigning completed Python modules.
 
-1. M5-T03 — final FIFO/heuristic/CP-SAT benchmark comparison
-2. M7-T01 — live psycopg/PostgreSQL container integration, restart/idempotency validation
-3. M7-T02 — Rust/gRPC trace-context propagation and full integration trace tests
-4. M7-T03 — live ClickHouse server/client integration and queries
-5. M7-T04 — persisted cross-service deterministic replay
-6. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
-7. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
+1. M7-T01 — live psycopg/PostgreSQL container integration, restart/idempotency validation
+2. M7-T02 — Rust/gRPC trace-context propagation and full integration trace tests
+3. M7-T03 — live ClickHouse server/client integration and queries
+4. M7-T04 — persisted cross-service deterministic replay
+5. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
+6. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
 
 ## First command in Work
 
@@ -122,3 +121,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M3-T04 complete: one Protobuf schema now generates Rust bindings at build time and reproducible Python bindings; 8 Rust and 140 Python tests pass.
 - M3-T05 complete: SubmitCommand/GetStatus Tonic service preserves robot identity and command idempotency; 10 unit tests plus 1 real localhost gRPC round-trip pass.
 - M5-T02 complete: deterministic OR-Tools CP-SAT enforces dependencies and cumulative resource capacity, minimizes makespan then weighted tardiness, and passes 6 focused tests (143 Python tests total).
+- M5-T03 complete: retained eight-job benchmark compares FIFO, priority, SPT, EDD, weighted, and CP-SAT. All makespans are 39 ticks; CP-SAT achieved weighted tardiness 227 versus the best heuristic's 229 in 59.077 ms on the recorded run.

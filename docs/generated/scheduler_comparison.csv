@@ -1,0 +1,7 @@
+seed,strategy,makespan,mean_lateness,total_tardiness,weighted_tardiness,compute_ms
+1,fifo,39.0,6.875,68.0,274.0,0.0
+1,priority,39.0,13.375,123.0,331.0,0.013
+1,spt,39.0,1.125,32.0,266.0,0.007
+1,edd,39.0,1.875,33.0,229.0,0.007
+1,weighted,39.0,13.125,117.0,289.0,0.008
+1,cp_sat,39.0,2.875,38.0,227.0,58.647

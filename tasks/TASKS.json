@@ -552,7 +552,7 @@
       "python -m pytest -q tests/integration/clickhouse"
     ],
     "objective": "Store/query high-volume events separately from transactional state.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "telemetry/**",

@@ -2,9 +2,9 @@
 
 ## Verification baseline
 
-- Python test suite: **148 passing tests**
-- Formal task graph: **35/43 complete**
-- Formal tasks remaining: M7-T03, M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
+- Python test suite: **149 passing tests**
+- Formal task graph: **36/43 complete**
+- Formal tasks remaining: M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -98,10 +98,9 @@ These are local software/simulation measurements only.
 
 Do not spend time redesigning completed Python modules.
 
-1. M7-T03 — live ClickHouse server/client integration and queries
-2. M7-T04 — persisted cross-service deterministic replay
-3. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
-4. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
+1. M7-T04 — persisted cross-service deterministic replay
+2. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
+3. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
 
 ## First command in Work
 
@@ -122,3 +121,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M5-T03 complete: retained eight-job benchmark compares FIFO, priority, SPT, EDD, weighted, and CP-SAT. All makespans are 39 ticks; CP-SAT achieved weighted tardiness 227 versus the best heuristic's 229 in 59.077 ms on the recorded run.
 - M7-T01 complete: live psycopg/PostgreSQL tests prove transactional job updates, fresh-connection reads, durable command-id replay/conflict detection, and state survival across a real PostgreSQL 17 container restart (147 Python tests total).
 - M7-T02 complete: Python W3C `traceparent` metadata is extracted by OpenTelemetry in the Rust gRPC process; the Rust child span preserves the Python trace ID and returns a distinct span ID. Six telemetry integration tests and 11 Rust tests pass.
+- M7-T03 complete: live ClickHouse 25.8 integration writes telemetry batches and queries an ordered correlation timeline with preserved trace/span IDs and payloads.

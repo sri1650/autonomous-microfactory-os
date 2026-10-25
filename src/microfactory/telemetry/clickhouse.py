@@ -5,6 +5,10 @@ import json
 from typing import Any, Protocol, Sequence
 
 
+def _text(value: Any) -> str:
+    return value.decode("utf-8") if isinstance(value, bytes) else str(value)
+
+
 class ClickHouseInsertClient(Protocol):
     def insert(
         self,
@@ -13,6 +17,8 @@ class ClickHouseInsertClient(Protocol):
         *,
         column_names: Sequence[str],
     ) -> Any: ...
+
+    def query(self, query: str, *, parameters: dict[str, Any] | None = None) -> Any: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +55,30 @@ class ClickHouseTelemetrySink:
         self._client = client
         self._table = table
 
+    @classmethod
+    def connect(
+        cls,
+        *,
+        host: str = "127.0.0.1",
+        port: int = 8123,
+        database: str = "default",
+        username: str = "default",
+        password: str = "",
+        table: str = "robotics_events",
+    ) -> "ClickHouseTelemetrySink":
+        try:
+            import clickhouse_connect
+        except ImportError as exc:
+            raise RuntimeError("clickhouse-connect is required for live telemetry") from exc
+        client = clickhouse_connect.get_client(
+            host=host,
+            port=port,
+            database=database,
+            username=username,
+            password=password,
+        )
+        return cls(client, table)
+
     def write(self, records: Sequence[TelemetryRecord]) -> None:
         if not records:
             return
@@ -65,3 +95,24 @@ class ClickHouseTelemetrySink:
             for record in records
         ]
         self._client.insert(self._table, rows, column_names=self.COLUMNS)
+
+    def query_correlation(self, correlation_id: str) -> list[TelemetryRecord]:
+        result = self._client.query(
+            f"""SELECT {', '.join(self.COLUMNS)}
+                FROM {self._table}
+                WHERE correlation_id = {{correlation_id:String}}
+                ORDER BY timestamp_ns, event_type""",
+            parameters={"correlation_id": correlation_id},
+        )
+        return [
+            TelemetryRecord(
+                timestamp_ns=int(row[0]),
+                event_type=str(row[1]),
+                aggregate_id=str(row[2]),
+                correlation_id=str(row[3]),
+                trace_id=_text(row[4]) or None,
+                span_id=_text(row[5]) or None,
+                payload=json.loads(row[6]),
+            )
+            for row in result.result_rows
+        ]

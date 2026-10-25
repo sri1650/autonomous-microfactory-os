@@ -1,0 +1,7 @@
+{
+  "grid": {"width": 5, "height": 3, "blocked": [[2, 0], [2, 1], [2, 2]]},
+  "recovery_blocked": [[2, 0], [2, 2]],
+  "robot": {"id": "mover-failure", "start": [0, 1], "goal": [4, 1]},
+  "heartbeat_fault": {"tick": 5, "magnitude": 1.0},
+  "max_vision_retries": 1
+}

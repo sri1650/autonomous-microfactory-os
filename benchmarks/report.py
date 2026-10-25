@@ -4,82 +4,83 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "docs/generated/performance_report.md"
+GENERATED = ROOT / "docs/generated"
+OUT = GENERATED / "performance_report.md"
 
 
-def read_one(path: Path):
+def read_rows(name: str) -> list[dict[str, str]]:
+    path = GENERATED / name
     if not path.exists():
-        return None
-    with path.open(newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-    return rows[0] if rows else None
+        raise FileNotFoundError(f"required measured artefact is missing: {path}")
+    with path.open(newline="", encoding="utf-8") as source:
+        return list(csv.DictReader(source))
 
 
 def main() -> int:
-    fleet5 = read_one(ROOT / "docs/generated/fleet_05.csv")
-    fleet20 = read_one(ROOT / "docs/generated/fleet_20.csv")
-    vision = read_one(ROOT / "docs/generated/vision_200.csv")
-    cbs_path = ROOT / "docs/generated/fleet_cbs_comparison.csv"
-    cbs_rows = []
-    if cbs_path.exists():
-        with cbs_path.open(newline="", encoding="utf-8") as f:
-            cbs_rows = list(csv.DictReader(f))
+    scheduler = read_rows("scheduler_comparison.csv")
+    fleet = read_rows("fleet_multiseed_100.csv")
+    runtime = read_rows("runtime_grpc.csv")[0]
+    vision = read_rows("vision_200.csv")[0]
 
     lines = [
-        "# Pre-integration Performance Evidence",
+        "# Final Measured Performance Report",
         "",
-        "Generated from measured local benchmark artefacts. These figures are environment-specific and are not production SLAs.",
+        "Measured locally on the development machine. These are software/simulation results, not production SLAs or hardware validation.",
         "",
-        "## Fleet routing",
+        "## Scheduler retained workload",
         "",
-        "| Robots | Planner ms | Total steps | Path stretch | Completion tick | Vertex conflicts | Edge swaps |",
-        "|---:|---:|---:|---:|---:|---:|---:|",
+        "| Strategy | Makespan | Mean lateness | Total tardiness | Weighted tardiness | Compute ms |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
-    for row in (fleet5, fleet20):
-        if row:
-            lines.append(
-                f"| {row['robots']} | {row['planner_ms']} | {row['total_steps']} | {row['path_stretch']} | "
-                f"{row['completion_tick']} | {row['vertex_conflicts']} | {row['edge_swaps']} |"
-            )
-    lines += ["", "## CBS evaluation", "", "| Scenario | Planner | Median ms | p95 ms | Cost | Makespan | Conflict-free |", "|---|---|---:|---:|---:|---:|---|"]
-    for row in cbs_rows:
+    for row in scheduler:
         lines.append(
-            f"| {row['scenario']} | {row['planner']} | {float(row['median_ms']):.3f} | "
-            f"{float(row['p95_ms']):.3f} | {row['sum_of_costs']} | {row['makespan']} | {row['conflict_free']} |"
+            f"| {row['strategy']} | {row['makespan']} | {row['mean_lateness']} | "
+            f"{row['total_tardiness']} | {row['weighted_tardiness']} | {row['compute_ms']} |"
         )
-
-    lines += ["", "## Vision alignment", ""]
-    if vision:
-        lines += [
-            f"- Samples: **{vision['samples']}**",
-            f"- Mean latency: **{vision['mean_latency_ms']} ms**",
-            f"- p95 latency: **{vision['p95_latency_ms']} ms**",
-            f"- Mean position-estimation error: **{vision['mean_position_estimation_error_px']} px**",
-            f"- Mean angle error: **{vision['mean_angle_error_deg']} deg**",
-            f"- Decisions: PASS {vision['pass']}, RETRY {vision['retry']}, FAIL {vision['fail']}, HUMAN_REVIEW {vision['human_review']}",
-        ]
 
     lines += [
         "",
+        "CP-SAT and every baseline reached a 39-tick makespan. CP-SAT produced weighted tardiness 227, versus 229 for the best heuristic (EDD).",
+        "",
+        "## Fleet multi-seed scaling",
+        "",
+        "| Robots | Grid | Runs | p50 ms | p95 ms | Max ms | Mean stretch | Max makespan | Conflict-free |",
+        "|---:|---:|---:|---:|---:|---:|---:|---:|:---:|",
+    ]
+    for row in fleet:
+        lines.append(
+            f"| {row['robots']} | {row['grid']} | {row['runs']} | {float(row['p50_ms']):.2f} | "
+            f"{float(row['p95_ms']):.2f} | {float(row['max_ms']):.2f} | {float(row['mean_stretch']):.4f} | "
+            f"{row['max_makespan']} | {row['all_conflict_free']} |"
+        )
+
+    lines += [
+        "",
+        "## Rust gRPC runtime (loopback, 100 samples)",
+        "",
+        "| Operation | p50 ms | p95 ms |",
+        "|---|---:|---:|",
+        f"| Idempotent SubmitCommand | {runtime['submit_p50_ms']} | {runtime['submit_p95_ms']} |",
+        f"| GetStatus | {runtime['status_p50_ms']} | {runtime['status_p95_ms']} |",
+        "",
+        "## Synthetic vision alignment",
+        "",
+        f"- Samples: **{vision['samples']}**",
+        f"- Mean latency: **{vision['mean_latency_ms']} ms**; p95: **{vision['p95_latency_ms']} ms**",
+        f"- Mean position error: **{vision['mean_position_estimation_error_px']} px**; mean angle error: **{vision['mean_angle_error_deg']}°**",
+        "",
         "## Integration evidence",
         "",
-        "- Python vertical slice: three jobs through FIFO scheduling, conflict-free mover routing, vision verification and terminal success.",
-        "- Recovery slice: terminal vision-task failure can be explicitly retried, reopens the job, and can then succeed.",
-        "- Deterministic simulation replay core validates event ordering, machine transitions and event digest integrity.",
-        "- OpenTelemetry Python boundary propagates request span identity into correlated orchestrator events.",
+        "- Golden E2E: three jobs compose CP-SAT, conflict-free routing, simulated vision, PostgreSQL, three Rust gRPC processes, ClickHouse, and persisted replay.",
+        "- Failure E2E: blocked aisle replans after bounded failure, heartbeat loss rejects a mission, and a failed vision pick succeeds after one explicit retry.",
+        "- PostgreSQL restart/idempotency, cross-process W3C tracing, and live ClickHouse correlation queries have dedicated integration tests.",
         "",
-        "## Pending before final performance report",
+        "## Honest scope",
         "",
-        "- Rust runtime/gRPC command latency and heartbeat detection",
-        "- FIFO vs OR-Tools CP-SAT makespan/lateness comparison",
-        "- live PostgreSQL restart/idempotency integration",
-        "- live ClickHouse ingestion/query measurements",
-        "- full Rust + scheduler + database + telemetry E2E scenario",
-        "",
-        "The final recruiter README must only promote quantitative figures after the corresponding final integration benchmark is retained beside the claim.",
+        "All measurements use local software, synthetic fixtures, or simulation. No physical robot/camera validation, production deployment, safety certification, or production-scale load claim is made.",
     ]
-    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(OUT)
     return 0

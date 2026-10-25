@@ -3,8 +3,8 @@
 ## Verification baseline
 
 - Python test suite: **153 passing tests**
-- Formal task graph: **39/43 complete**
-- Formal tasks remaining: M9-T03, M10-T01, M10-T02, M10-T03
+- Formal task graph: **40/43 complete**
+- Formal tasks remaining: M10-T01, M10-T02, M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -124,3 +124,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M7-T04 complete: persisted correlation streams replay deterministically across job, Rust runtime, task, and vision events with canonical digest validation and mixed/unordered stream rejection.
 - M9-T01 complete: the live three-job golden scenario composes deterministic routing/vision, optimal CP-SAT scheduling, durable PostgreSQL terminal state, three real Rust gRPC runtimes, ClickHouse trace persistence, and digest-checked replay.
 - M9-T02 complete: deterministic failure E2E proves blocked-aisle detection/replanning, heartbeat-loss mission rejection/recovery, and a vision retry bounded to one attempt; all four E2E tests pass.
+- M9-T03 complete: final report retains scheduler, multi-seed fleet, synthetic vision, and 100-sample loopback Rust gRPC measurements alongside integration evidence and explicit scope limits.

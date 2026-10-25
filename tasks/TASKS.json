@@ -677,7 +677,7 @@
       "python benchmarks/report.py"
     ],
     "objective": "Generate CSV/Markdown summary from measured scheduler/fleet/runtime metrics.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "benchmarks/**",

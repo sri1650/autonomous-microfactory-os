@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import perf_counter
 from typing import Sequence
 
 from microfactory.domain.models import JobRecord, ResourceRecord, ResourceState, TaskState
@@ -21,6 +22,29 @@ class SchedTask:
 class SchedulingProblem:
     tasks: tuple[SchedTask, ...]
     capacities: dict[str,int]
+
+
+@dataclass(frozen=True, slots=True)
+class ScheduledTask:
+    job_id: str
+    task_id: str
+    resource_type: str
+    start: int
+    end: int
+
+
+@dataclass(frozen=True, slots=True)
+class ScheduleSolution:
+    tasks: tuple[ScheduledTask, ...]
+    makespan: int
+    total_tardiness: int
+    weighted_tardiness: int
+    solver_ms: float
+    optimal: bool
+
+
+class SchedulingInfeasibleError(RuntimeError):
+    pass
 
 
 def build_problem(jobs: Sequence[JobRecord], resources: Sequence[ResourceRecord]) -> SchedulingProblem:
@@ -49,13 +73,8 @@ def build_problem(jobs: Sequence[JobRecord], resources: Sequence[ResourceRecord]
     return SchedulingProblem(tuple(tasks),dict(sorted(capacities.items())))
 
 
-def solve_cp_sat(problem: SchedulingProblem):
-    """Solve via OR-Tools when the optional dependency is installed.
-
-    The model/extraction boundary is fully tested without OR-Tools. Work/Codex
-    should implement and integration-test this function in the environment that
-    provides `ortools`.
-    """
+def solve_cp_sat(problem: SchedulingProblem) -> ScheduleSolution:
+    """Solve dependency and resource-capacity scheduling deterministically."""
     try:
         from ortools.sat.python import cp_model  # type: ignore
     except ImportError as exc:
@@ -63,6 +82,89 @@ def solve_cp_sat(problem: SchedulingProblem):
             "OR-Tools is not installed; CP-SAT solving is reserved for the Work/Codex integration environment"
         ) from exc
 
-    # Intentionally fail loudly rather than pretending an unverified optimiser
-    # exists. The task graph requires Codex to finish the real model.
-    raise NotImplementedError("CP-SAT solve model is intentionally reserved for M5-T02")
+    if not problem.tasks:
+        return ScheduleSolution((), 0, 0, 0, 0.0, True)
+
+    model = cp_model.CpModel()
+    horizon = sum(task.duration for task in problem.tasks)
+    keys = {(task.job_id, task.task_id): task for task in problem.tasks}
+    starts = {}
+    ends = {}
+    intervals_by_resource: dict[str, list] = {}
+
+    for task in problem.tasks:
+        key = (task.job_id, task.task_id)
+        name = f"{task.job_id}:{task.task_id}"
+        starts[key] = model.new_int_var(0, horizon, f"start:{name}")
+        ends[key] = model.new_int_var(0, horizon, f"end:{name}")
+        interval = model.new_interval_var(
+            starts[key], task.duration, ends[key], f"interval:{name}"
+        )
+        intervals_by_resource.setdefault(task.resource_type, []).append(interval)
+
+    for task in problem.tasks:
+        key = (task.job_id, task.task_id)
+        for dependency in task.dependencies:
+            if dependency not in keys:
+                raise ValueError(
+                    f"unknown dependency {dependency!r} for task {key!r}"
+                )
+            model.add(starts[key] >= ends[dependency])
+
+    for resource_type, intervals in intervals_by_resource.items():
+        capacity = problem.capacities.get(resource_type, 0)
+        if capacity <= 0:
+            raise SchedulingInfeasibleError(
+                f"no online capacity for resource type {resource_type!r}"
+            )
+        model.add_cumulative(intervals, [1] * len(intervals), capacity)
+
+    makespan = model.new_int_var(0, horizon, "makespan")
+    model.add_max_equality(makespan, list(ends.values()))
+    tardiness_vars = []
+    weighted_terms = []
+    for task in problem.tasks:
+        if task.due_tick is None:
+            continue
+        key = (task.job_id, task.task_id)
+        tardiness = model.new_int_var(0, horizon, f"tardiness:{task.job_id}:{task.task_id}")
+        model.add_max_equality(tardiness, [ends[key] - task.due_tick, 0])
+        tardiness_vars.append(tardiness)
+        weighted_terms.append(tardiness * max(1, task.priority))
+
+    makespan_weight = horizon * sum(max(1, task.priority) for task in problem.tasks) + 1
+    model.minimize(makespan * makespan_weight + sum(weighted_terms))
+
+    solver = cp_model.CpSolver()
+    solver.parameters.num_search_workers = 1
+    solver.parameters.random_seed = 0
+    started = perf_counter()
+    status = solver.solve(model)
+    elapsed_ms = (perf_counter() - started) * 1_000
+    if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+        raise SchedulingInfeasibleError(f"CP-SAT status {solver.status_name(status)}")
+
+    scheduled = tuple(
+        ScheduledTask(
+            task.job_id,
+            task.task_id,
+            task.resource_type,
+            solver.value(starts[(task.job_id, task.task_id)]),
+            solver.value(ends[(task.job_id, task.task_id)]),
+        )
+        for task in problem.tasks
+    )
+    tardiness_values = [solver.value(value) for value in tardiness_vars]
+    weighted_tardiness = sum(
+        max(0, item.end - task.due_tick) * max(1, task.priority)
+        for task, item in zip(problem.tasks, scheduled, strict=True)
+        if task.due_tick is not None
+    )
+    return ScheduleSolution(
+        scheduled,
+        solver.value(makespan),
+        sum(tardiness_values),
+        weighted_tardiness,
+        round(elapsed_ms, 3),
+        status == cp_model.OPTIMAL,
+    )

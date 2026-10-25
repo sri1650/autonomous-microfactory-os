@@ -397,7 +397,7 @@
       "python -m pytest -q tests/test_scheduler_ortools.py"
     ],
     "objective": "Optimise a constrained schedule with dependencies, durations and resource capacity.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/scheduler/**",

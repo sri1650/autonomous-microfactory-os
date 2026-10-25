@@ -30,7 +30,10 @@ def test_invalid_duration_rejected():
     with pytest.raises(ValueError):
         build_problem([ready],[ResourceRecord("m1","m")])
 
-def test_solver_boundary_is_explicit_without_ortools():
+def test_solver_uses_extracted_problem():
     p=build_problem([prepared()],[ResourceRecord("p1","printer"),ResourceRecord("v1","vision")])
-    with pytest.raises((RuntimeError,NotImplementedError)):
-        solve_cp_sat(p)
+    solution=solve_cp_sat(p)
+    scheduled={(task.job_id,task.task_id):task for task in solution.tasks}
+    assert scheduled[("j","b")].start >= scheduled[("j","a")].end
+    assert solution.makespan == 6
+    assert solution.optimal

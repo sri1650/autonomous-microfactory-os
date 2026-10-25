@@ -1,0 +1,6 @@
+{
+  "jobs": ["job-high", "job-mid", "job-low"],
+  "robots": ["mover-1", "mover-2", "mover-3"],
+  "expected_scheduler_makespan": 6,
+  "expected_terminal_state": "SUCCEEDED"
+}

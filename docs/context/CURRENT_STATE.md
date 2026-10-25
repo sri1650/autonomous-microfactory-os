@@ -2,9 +2,9 @@
 
 ## Verification baseline
 
-- Python test suite: **151 passing tests**
-- Formal task graph: **37/43 complete**
-- Formal tasks remaining: M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
+- Python test suite: **152 passing tests**
+- Formal task graph: **38/43 complete**
+- Formal tasks remaining: M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -122,3 +122,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M7-T02 complete: Python W3C `traceparent` metadata is extracted by OpenTelemetry in the Rust gRPC process; the Rust child span preserves the Python trace ID and returns a distinct span ID. Six telemetry integration tests and 11 Rust tests pass.
 - M7-T03 complete: live ClickHouse 25.8 integration writes telemetry batches and queries an ordered correlation timeline with preserved trace/span IDs and payloads.
 - M7-T04 complete: persisted correlation streams replay deterministically across job, Rust runtime, task, and vision events with canonical digest validation and mixed/unordered stream rejection.
+- M9-T01 complete: the live three-job golden scenario composes deterministic routing/vision, optimal CP-SAT scheduling, durable PostgreSQL terminal state, three real Rust gRPC runtimes, ClickHouse trace persistence, and digest-checked replay.

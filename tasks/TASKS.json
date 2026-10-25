@@ -638,7 +638,7 @@
       "python -m pytest -q tests/e2e"
     ],
     "objective": "Run three concurrent jobs through scheduling, mover routing, simulated machine execution and vision result to terminal state.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "tests/e2e/**",

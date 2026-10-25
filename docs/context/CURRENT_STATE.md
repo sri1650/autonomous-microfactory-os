@@ -3,8 +3,8 @@
 ## Verification baseline
 
 - Python test suite: **153 passing tests**
-- Formal task graph: **42/43 complete**
-- Formal tasks remaining: M10-T03
+- Formal task graph: **43/43 complete**
+- Formal tasks remaining: none
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -94,12 +94,9 @@ See:
 
 These are local software/simulation measurements only.
 
-## Deliberately reserved for Codex / Work
+## Completed scope
 
-Do not spend time redesigning completed Python modules.
-
-1. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
-2. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
+All formal implementation, integration, E2E, measurement and portfolio-documentation tasks are complete. Remaining work is physical hardware, production and safety validation outside this software project's claimed scope.
 
 ## First command in Work
 
@@ -127,3 +124,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M9-T03 complete: final report retains scheduler, multi-seed fleet, synthetic vision, and 100-sample loopback Rust gRPC measurements alongside integration evidence and explicit scope limits.
 - M10-T01 complete: recruiter README now links only retained measurements, explains the architecture and trade-offs, provides exact local/live commands, and states the hardware/production/safety boundary.
 - M10-T02 complete: the three-minute demo has a timed narration, exact E2E/report/preview commands, expected results, capture shots, and an explicit recording truthfulness checklist.
+- M10-T03 complete: interview preparation covers architecture trade-offs, algorithm mechanics, real debugging stories, failure semantics, measured evidence and explicit next validation steps.

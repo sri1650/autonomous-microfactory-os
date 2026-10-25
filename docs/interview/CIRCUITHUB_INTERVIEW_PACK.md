@@ -1,86 +1,109 @@
-# CircuitHub-Oriented Interview Pack
+# Autonomous Microfactory OS — Interview Pack
 
-This is preparation material, not a script to memorise. Every claim must match what the repository has actually validated at interview time.
+Use this as preparation, not a memorised script. Every claim below is backed by the repository’s retained local evidence.
 
-## 1. Why Python and Rust?
-**Answer structure:** Python maximises iteration speed for orchestration, scheduling, simulation and CV/ML integration. Rust owns the runtime boundary where invalid state transitions, duplicate commands, concurrency and watchdog semantics matter. Protobuf prevents either language from becoming the contract source of truth.
+## Architecture questions
 
-## 2. How do you stop 20–50 movers colliding?
-Start with a deterministic A* baseline, then add time-expanded reservations that prevent vertex conflicts and edge swaps. Cooperative A* provides a practical baseline. Benchmark it under corridor/intersection contention before deciding whether CBS complexity is justified.
+### Why Python and Rust?
 
-## 3. How do you handle deadlocks?
-Avoid pretending path planning alone solves them. Detect persistent wait cycles/resource dependencies, apply deterministic priority/backoff, release/replan reservations, and preserve bounded progress. Measure completion/deadlock count under adversarial scenarios.
+Python keeps orchestration, optimisation, simulation and CV iteration fast and gives direct access to OR-Tools/OpenCV. Rust owns the concurrent robot-command/watchdog boundary where typed states and predictable failure behaviour matter. Protobuf is the language-neutral contract; neither implementation privately defines the wire format.
 
-## 4. Why OR-Tools?
-Scheduling is a constrained optimisation problem: task dependencies, machine capabilities, capacity, priority and deadlines. FIFO provides a transparent baseline; CP-SAT is introduced only after baseline metrics exist so the value can be measured.
+The trade-off is operational complexity: two build systems and cross-language tracing. The golden E2E justifies that cost by launching three real Rust/Tonic processes from the Python integration layer.
 
-## 5. How do you bridge planning to a real controller?
-High-level software emits typed commands with command IDs, deadlines and explicit acknowledgement semantics. The Rust runtime rejects invalid state transitions, deduplicates commands and maintains watchdog/heartbeat state. No silent retry is allowed for a command that may already have caused motion.
+### Why PostgreSQL and ClickHouse?
 
-## 6. What happens if the network drops after a motion command?
-The caller cannot assume success or blindly repeat. Reconnect/status reconciliation must determine whether the command was accepted/completed. Duplicate command IDs return the original semantic result. Safety stop behaviour belongs below the orchestration layer.
+PostgreSQL is business truth: current jobs/tasks and durable command IDs are transactional and survive reconnect/restart. ClickHouse is append-oriented observability: correlated event timelines are queried by job/correlation ID and replayed deterministically. Using ClickHouse as the authoritative job store would complicate transactional invariants; using PostgreSQL for high-volume trace analysis would couple operational queries to business storage.
 
-## 7. How is the system observable?
-One correlation/trace context should follow API request → job → task → scheduler → fleet/runtime → vision/machine result. PostgreSQL stores business truth; ClickHouse stores high-volume events. OpenTelemetry exposes latency and causal paths.
+### What is the consistency model?
 
-## 8. What does deterministic replay buy you?
-It turns “cannot reproduce” into a testable artefact. A scenario, seed and ordered event history reconstruct state. Replay digest mismatch exposes nondeterminism or missing side effects.
+The project does not claim distributed exactly-once execution. It uses at-least-once delivery assumptions plus stable command IDs and semantic idempotency. A duplicated command gets the same outcome; reuse of that ID for a different operation is rejected. PostgreSQL proves durable identity across new connections and a real container restart. Physical side effects would still require status reconciliation with the controller.
 
-## 9. Where would an LLM/VLM be allowed?
-Never directly bypassing deterministic control or safety validation. It may diagnose faults, interpret documentation or propose bounded actions. Outputs are schema-constrained, evaluated on a synthetic fault corpus and blocked from unsafe actions.
+### How is the system observable?
 
-## 10. How would you prove this is production-minded rather than a demo?
-Show: explicit interfaces; idempotency; failure semantics; deterministic tests; CI; benchmarks; tracing; persistent state; fault injection; replay; measured limitations. Also be explicit about what is simulation-validated versus hardware-tested.
+A W3C trace context crosses Python into the Rust gRPC process. Rust creates a child span with the same trace ID and a distinct span ID. Correlation, trace and span IDs are stored with ClickHouse events, which are queried into an ordered timeline and checked with a canonical replay digest.
 
-## 11. Likely deep dives
-- A* vs Cooperative A* vs CBS trade-offs
-- CP-SAT scheduling complexity
-- Rust ownership/concurrency choices
-- exactly-once myth vs idempotent command handling
-- camera confidence thresholds and human review
-- database transaction boundaries
-- trace propagation across Python/Rust
-- replay/event ordering
-- safe failure semantics
+## Algorithm explanations
 
-## 12. Honest limitation statement
-At the current software-only stage, the project demonstrates architecture, simulation, tests and integration patterns. It does not claim production-hardware validation, safety certification, real robot stopping-distance validation or factory-scale throughput until those measurements exist.
+### Cooperative A* and CBS
 
----
+Time-expanded A* searches `(cell, tick)` states. The reservation table forbids two robots from occupying the same vertex at the same tick and forbids opposite-direction edge swaps. Prioritised cooperative planning sorts requests deterministically and commits each route into the table; goal occupancy is held through the planning horizon.
 
-# Engineering stories discovered during implementation
+This is fast and understandable but not complete: a poor priority order can fail despite a joint solution. Conflict-Based Search is retained as a reference/escalation planner. It branches on the earliest conflict and replans constrained agents, trading more compute for a more complete high-level search. In retained adversarial cases CBS did not improve path cost/makespan enough to justify being the default.
 
-## 1. Goal-occupancy reservation bug
-**Problem:** the prioritised fleet planner originally reserved a robot path only through its arrival timestep. A later robot could therefore legally route through the first robot's final cell even though that robot was assumed to remain there.
+### CP-SAT scheduling
 
-**Fix:** hold the goal-cell reservation through the planning horizon unless a later replanning cycle explicitly releases/moves that robot.
+Each task has integer start/end variables and an interval. Dependency edges add precedence constraints; resource types use cumulative capacity constraints. The objective lexicographically favours makespan by assigning it a weight larger than the maximum possible weighted-tardiness contribution, then minimises priority-weighted tardiness. One search worker and a fixed seed keep runs deterministic.
 
-**Why this matters:** collision checking is not just about simultaneous path segments; terminal occupancy semantics have to be explicit.
+On the retained eight-job workload, all strategies reached a 39-tick makespan. CP-SAT achieved weighted tardiness 227 versus 229 for EDD, at 58.647 ms recorded compute time. The result is a modest quality improvement with a clear compute cost—not a claim that CP-SAT always wins.
 
-**Interview angle:** discuss model assumptions, temporal reservations and why a benchmark that only compares overlapping path-list lengths can hide this bug.
+### Deterministic replay
 
-## 2. Failed terminal task could not retry
-**Problem:** if the last active task failed, `derived_terminal_state()` made the job `FAILED`. The retry API itself required the job to be `RUNNING`, making the documented retry transition impossible for that terminal task.
+Simulation events have logical ticks, unique monotonic sequence numbers and canonical JSON hashing. Persisted cross-service records add timestamp, event type, aggregate, correlation, trace/span identity and payload. Replay rejects mixed correlations or unordered records, reconstructs aggregate/task states and validates the digest. A first-divergence helper reports the earliest structural mismatch instead of only saying the final hash changed.
 
-**Fix:** allow one tightly constrained recovery transition: a `FAILED` job may reopen to `RUNNING` only when the selected task is `FAILED` and the requested task transition is `FAILED -> READY`. Other mutations of failed jobs remain rejected.
+### Vision decision policy
 
-**Interview angle:** state-machine invariants, recovery semantics, idempotency and why failure/retry behavior must be tested end-to-end rather than only at the task level.
+OpenCV estimates position/angle error; deterministic thresholds map confidence and error to PASS, RETRY, FAIL or HUMAN_REVIEW. The ONNX adapter is lazy so model inference remains replaceable. Reported accuracy/latency is from synthetic fixtures only and is not a real camera or production model claim.
 
-## 3. Why CBS is not the default planner
-The project implements both prioritised cooperative A* and Conflict-Based Search.
+## Failure and recovery questions
 
-On the retained adversarial cases, both produced the same sum-of-costs and makespan, while CBS consumed more compute. Therefore the engineering decision is:
-- cooperative A*: online/default planner;
-- CBS: reference/escalation planner and quality comparator for tightly coupled conflicts.
+### What happens after a network drop following a motion command?
 
-This is stronger than choosing the theoretically more sophisticated algorithm by default without workload evidence.
+The caller must not blindly generate a new command ID. It reconnects, queries status and retries with the original ID if appropriate. The runtime returns the original semantic response for a duplicate. Real safe-stop behaviour belongs in the controller/safety layer below this orchestration prototype.
 
-## 4. Observability is part of correctness
-The Python API boundary now starts OpenTelemetry spans, while the event-sink decorator attaches trace ID, span ID and job correlation ID to orchestrator events.
+### How are blocked aisles handled?
 
-The Rust/runtime propagation is intentionally still labelled incomplete. This gives a useful discussion of where trace context must cross language/process boundaries and why ClickHouse telemetry is separated from transactional Postgres state.
+An unreachable aisle fails within a finite planning horizon. The E2E scenario then changes the known map by opening one cell and performs one bounded replan. The system does not loop indefinitely or silently invent a path.
 
-## 5. Honest validation boundary
-Current measurable evidence includes deterministic simulation, route conflict tests, synthetic vision fixtures, Python integration slices and trace correlation. It does **not** include production robots, certified safety functions, real factory cycle-time numbers or a live ClickHouse/Postgres deployment yet.
+### What does heartbeat loss do?
 
-Use this limitation proactively in interviews; it demonstrates engineering judgement rather than weakening the project.
+The Rust watchdog has explicit healthy/expired boundary tests. At the fleet layer, a telemetry heartbeat age of at least 2 seconds classifies the robot OFFLINE and mission acceptance returns false. Recovery requires fresh telemetry; it is not inferred from elapsed wall time alone in deterministic tests.
+
+### How does a failed vision pick recover?
+
+A failed final task makes the job FAILED. One tightly constrained transition permits only that failed task to move back to READY, reopens the job, increments its attempt, and allows reassignment. The E2E fixture caps recovery at one retry and verifies terminal success; other mutations of a failed job remain illegal.
+
+## Engineering stories
+
+### Goal-cell occupancy bug
+
+The first cooperative planner reserved a route only through arrival. A later robot could pass through the first robot’s final cell after its path list ended. The fix holds that cell through the horizon. The lesson is that collision semantics include terminal occupancy, not only overlapping path arrays.
+
+### Terminal retry state-machine bug
+
+The job became FAILED as soon as its last active task failed, while retry originally required a RUNNING job. The fix added one narrow `FAILED task -> READY` recovery that also reopens the job. This was found by a vertical recovery test, not by testing task transitions alone.
+
+### Cross-process trace extraction
+
+The first Rust OpenTelemetry extraction path did not reliably produce a valid parent from Tonic metadata in the local test. The runtime kept the standard W3C propagator and added strict parsing of the `traceparent` fallback, then verified the exact Python trace ID and a distinct Rust child span over a real localhost RPC.
+
+### Live-storage serialization edges
+
+PostgreSQL required stable JSON encoding/decoding of task dependencies and payloads across fresh connections. ClickHouse `FixedString` trace/span columns can be returned as bytes, so the boundary normalises them before replay. Both issues are covered by live container tests rather than mocks alone.
+
+## Likely deep dives
+
+- cooperative A* completeness versus CBS cost
+- CP-SAT objective weighting and capacity modelling
+- idempotency versus the “exactly once” myth
+- PostgreSQL transaction boundaries and restart evidence
+- W3C propagation across Python/Rust
+- replay ordering, canonicalization and first divergence
+- confidence thresholds and human review
+- watchdog semantics versus certified safety functions
+- what to measure on real hardware before deployment
+
+## Honest limitations and next validation steps
+
+Current evidence covers local software, deterministic simulation, synthetic vision, loopback gRPC, and PostgreSQL/ClickHouse containers. It does not cover:
+
+- real robots, motors, cameras, calibration drift or environmental variation;
+- emergency stops, safety PLCs, interlocks, risk assessment or safety certification;
+- stopping distance, motion envelopes, payload dynamics or network fault behaviour on hardware;
+- production deployment, long-duration soak tests, security hardening or disaster recovery;
+- factory-scale throughput or a production SLA.
+
+Before hardware use, add a hardware-in-the-loop adapter, controller status reconciliation, real sensor calibration datasets, latency/jitter/dropout campaigns, safety-layer integration owned by qualified engineers, and staged validation beginning with non-actuating dry runs.
+
+## Thirty-second close
+
+“The project’s strongest result is not a flashy dashboard; it is the chain of evidence. The same job can be scheduled deterministically, routed without recorded conflicts, sent through a typed Rust boundary, persisted, traced across processes and replayed with a canonical digest. The limitations are explicit because the remaining gap is physical and safety validation, not another software claim.”

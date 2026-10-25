@@ -722,7 +722,7 @@
     "title": "Interview pack",
     "verify": [],
     "objective": "Create architecture tradeoff Q&A, algorithms explanation, failure stories and honest limitations.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "docs/interview/**"

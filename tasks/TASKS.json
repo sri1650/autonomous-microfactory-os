@@ -570,7 +570,7 @@
       "python -m pytest -q tests/test_replay.py"
     ],
     "objective": "Reconstruct ordered factory/job state from recorded events and compare digest.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "src/microfactory/replay/**",

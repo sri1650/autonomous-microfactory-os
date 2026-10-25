@@ -2,9 +2,9 @@
 
 ## Verification baseline
 
-- Python test suite: **149 passing tests**
-- Formal task graph: **36/43 complete**
-- Formal tasks remaining: M7-T04, M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
+- Python test suite: **151 passing tests**
+- Formal task graph: **37/43 complete**
+- Formal tasks remaining: M9-T01, M9-T02, M9-T03, M10-T01, M10-T02, M10-T03
 - Pre-Codex quality gate: passing
 - Fleet retained multi-seed benchmark: conflict-free through 100 robots
 - Hardware validation: none claimed
@@ -31,7 +31,7 @@
 - deterministic priority/SPT/EDD/weighted heuristics
 - retained scheduler benchmark workload and measured CSV
 - CP-SAT problem extraction/data model and deterministic OR-Tools solve are tested
-- final baseline/CP-SAT benchmark comparison remains for M5-T03
+- measured baseline/CP-SAT benchmark comparison
 
 ### Fleet
 - A*
@@ -76,7 +76,7 @@
 - W3C trace-context injection/extraction helpers for future RPC boundary
 - ClickHouse DDL + injectable sink boundary
 
-These boundaries are unit-tested but their **live external integrations are not complete**.
+PostgreSQL and ClickHouse boundaries are also verified against live local containers.
 
 ### Pre-integration E2E
 - three-job Python vertical slice
@@ -98,9 +98,8 @@ These are local software/simulation measurements only.
 
 Do not spend time redesigning completed Python modules.
 
-1. M7-T04 — persisted cross-service deterministic replay
-2. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
-3. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
+1. M9-T01..M9-T03 — final full-stack golden/failure E2E + final performance report
+2. M10-T01..M10-T03 — final recruiter README/demo/interview pack after integrated evidence exists
 
 ## First command in Work
 
@@ -122,3 +121,4 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M7-T01 complete: live psycopg/PostgreSQL tests prove transactional job updates, fresh-connection reads, durable command-id replay/conflict detection, and state survival across a real PostgreSQL 17 container restart (147 Python tests total).
 - M7-T02 complete: Python W3C `traceparent` metadata is extracted by OpenTelemetry in the Rust gRPC process; the Rust child span preserves the Python trace ID and returns a distinct span ID. Six telemetry integration tests and 11 Rust tests pass.
 - M7-T03 complete: live ClickHouse 25.8 integration writes telemetry batches and queries an ordered correlation timeline with preserved trace/span IDs and payloads.
+- M7-T04 complete: persisted correlation streams replay deterministically across job, Rust runtime, task, and vision events with canonical digest validation and mixed/unordered stream rejection.

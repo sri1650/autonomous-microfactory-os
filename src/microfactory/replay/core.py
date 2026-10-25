@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 import json
-from typing import Iterable
+from typing import Any, Iterable, Protocol
 
 from microfactory.sim.events import SimEvent, event_digest
 
@@ -21,6 +21,26 @@ class ReplayReport:
     final_tick: int
     complete: bool
     machines: dict[str, MachineReplayState]
+
+
+class PersistedRecord(Protocol):
+    timestamp_ns: int
+    event_type: str
+    aggregate_id: str
+    correlation_id: str
+    trace_id: str | None
+    span_id: str | None
+    payload: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class PersistedReplayReport:
+    digest: str
+    record_count: int
+    final_timestamp_ns: int
+    correlation_id: str
+    aggregate_states: dict[str, str]
+    event_types: tuple[str, ...]
 
 
 def _validate_event_order(events: list[SimEvent]) -> None:
@@ -98,6 +118,65 @@ def canonical_replay_json(report: ReplayReport) -> str:
 
 def replay_report_digest(report: ReplayReport) -> str:
     return sha256(canonical_replay_json(report).encode("utf-8")).hexdigest()
+
+
+def persisted_record_digest(records: Iterable[PersistedRecord]) -> str:
+    canonical = [
+        {
+            "timestamp_ns": record.timestamp_ns,
+            "event_type": record.event_type,
+            "aggregate_id": record.aggregate_id,
+            "correlation_id": record.correlation_id,
+            "trace_id": record.trace_id,
+            "span_id": record.span_id,
+            "payload": record.payload,
+        }
+        for record in records
+    ]
+    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256(encoded).hexdigest()
+
+
+def replay_persisted_records(
+    records: Iterable[PersistedRecord],
+    *,
+    expected_digest: str | None = None,
+) -> PersistedReplayReport:
+    """Replay one persisted correlation stream across service boundaries."""
+    stream = list(records)
+    if not stream:
+        raise ValueError("persisted record stream is empty")
+    timestamps = [record.timestamp_ns for record in stream]
+    if timestamps != sorted(timestamps):
+        raise ValueError("persisted record stream must be ordered by timestamp")
+    correlations = {record.correlation_id for record in stream}
+    if len(correlations) != 1:
+        raise ValueError("persisted record stream must contain one correlation_id")
+
+    states: dict[str, str] = {}
+    for record in stream:
+        key = record.aggregate_id
+        if record.event_type == "JOB_SUBMITTED":
+            states[key] = str(record.payload.get("state", "SUBMITTED"))
+        elif record.event_type == "TASK_STATE_CHANGED":
+            task_id = str(record.payload["task_id"])
+            states[f"{key}:{task_id}"] = str(record.payload["to"])
+        elif record.event_type.startswith("RUNTIME_"):
+            states[key] = str(record.payload.get("state", record.event_type.removeprefix("RUNTIME_")))
+        elif record.event_type == "VISION_VERIFICATION":
+            states[key] = str(record.payload["decision"])
+
+    digest = persisted_record_digest(stream)
+    if expected_digest is not None and digest != expected_digest:
+        raise ValueError(f"persisted record digest mismatch: expected {expected_digest}, got {digest}")
+    return PersistedReplayReport(
+        digest=digest,
+        record_count=len(stream),
+        final_timestamp_ns=stream[-1].timestamp_ns,
+        correlation_id=next(iter(correlations)),
+        aggregate_states=dict(sorted(states.items())),
+        event_types=tuple(record.event_type for record in stream),
+    )
 
 
 @dataclass(frozen=True, slots=True)

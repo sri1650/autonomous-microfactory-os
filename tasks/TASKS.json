@@ -514,7 +514,7 @@
       "python -m pytest -q tests/integration/postgres"
     ],
     "objective": "Persist jobs, tasks, resources, command identity and transactional state changes.",
-    "status": "todo",
+    "status": "done",
     "max_repair_attempts": 2,
     "allowed_paths": [
       "db/**",

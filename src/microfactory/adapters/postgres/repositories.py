@@ -24,12 +24,20 @@ class ConnectionLike(Protocol):
 class PostgresJobRepository:
     """DB-API-style PostgreSQL adapter with dependency-injected connections.
 
-    The SQL/serialization boundary is unit tested here. M7-T01 still requires
-    live psycopg + PostgreSQL container restart/idempotency tests.
+    Connections are injected for unit tests and can be created from a psycopg
+    DSN for live integration.
     """
 
     def __init__(self, connection_factory: Callable[[], ConnectionLike]) -> None:
         self._connection_factory=connection_factory
+
+    @classmethod
+    def from_dsn(cls, dsn: str) -> "PostgresJobRepository":
+        try:
+            import psycopg
+        except ImportError as exc:
+            raise RuntimeError("psycopg is required for PostgreSQL integration") from exc
+        return cls(lambda: psycopg.connect(dsn))
 
     def get(self, job_id: str) -> JobRecord | None:
         conn=self._connection_factory()
@@ -77,6 +85,57 @@ class PostgresJobRepository:
                         db_row,
                     )
             conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+
+
+class PostgresCommandRepository:
+    """Durable command-id idempotency records."""
+
+    def __init__(self, connection_factory: Callable[[], ConnectionLike]) -> None:
+        self._connection_factory=connection_factory
+
+    @classmethod
+    def from_dsn(cls, dsn: str) -> "PostgresCommandRepository":
+        try:
+            import psycopg
+        except ImportError as exc:
+            raise RuntimeError("psycopg is required for PostgreSQL integration") from exc
+        return cls(lambda: psycopg.connect(dsn))
+
+    def record(
+        self,
+        command_id: str,
+        operation_fingerprint: str,
+        aggregate_id: str,
+        result: dict,
+    ) -> dict:
+        conn = self._connection_factory()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO command_idempotency(
+                           command_id, operation_fingerprint, aggregate_id, result_json
+                       ) VALUES (%s, %s, %s, %s::jsonb)
+                       ON CONFLICT(command_id) DO NOTHING""",
+                    (command_id, operation_fingerprint, aggregate_id, json.dumps(result)),
+                )
+                cur.execute(
+                    """SELECT operation_fingerprint, aggregate_id, result_json
+                       FROM command_idempotency WHERE command_id = %s""",
+                    (command_id,),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    raise RuntimeError("command idempotency record was not persisted")
+                fingerprint = row[0] if not hasattr(row, "keys") else row["operation_fingerprint"]
+                stored_aggregate = row[1] if not hasattr(row, "keys") else row["aggregate_id"]
+                stored_result = row[2] if not hasattr(row, "keys") else row["result_json"]
+                if fingerprint != operation_fingerprint or stored_aggregate != aggregate_id:
+                    raise ValueError("command_id was reused for a different operation")
+            conn.commit()
+            return dict(stored_result)
         except Exception:
             conn.rollback()
             raise

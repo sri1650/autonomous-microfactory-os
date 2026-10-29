@@ -47,7 +47,7 @@ def _job_payload(job: JobRecord) -> dict[str, Any]:
     }
 
 
-def create_app(orchestrator: Orchestrator, *, tracer=None) -> FastAPI:
+def create_app(orchestrator: Orchestrator, *, tracer=None, event_reader=None) -> FastAPI:
     app = FastAPI(title="Autonomous Microfactory Factory API", version="0.1.0")
 
     if tracer is not None:
@@ -137,6 +137,25 @@ def create_app(orchestrator: Orchestrator, *, tracer=None) -> FastAPI:
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         return _job_payload(job)
+
+    if event_reader is not None:
+        @app.get("/jobs/{job_id}/events")
+        def get_job_events(job_id: str):
+            try:
+                orchestrator.get_job(job_id)
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            return {
+                "job_id": job_id,
+                "events": [
+                    {
+                        "event_id": event.event_id,
+                        "event_type": event.event_type,
+                        "payload": event.payload,
+                    }
+                    for event in event_reader.list_for_aggregate(job_id)
+                ],
+            }
 
     @app.post("/jobs/{job_id}/tasks/{task_id}/retry")
     def retry_task(job_id: str, task_id: str, x_command_id: str = Header(alias="X-Command-ID")):

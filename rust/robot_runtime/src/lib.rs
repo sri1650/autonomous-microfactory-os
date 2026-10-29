@@ -5,6 +5,7 @@ pub mod proto {
     tonic::include_proto!("microfactory.v1");
 }
 
+mod execution;
 mod service;
 pub use service::RuntimeService;
 
@@ -210,6 +211,13 @@ impl RobotRuntimeState {
 
     pub fn submit_command(&mut self, command: RobotCommand) -> CommandAck {
         if let Some(record) = self.commands.get(&command.command_id) {
+            if record.command != command {
+                return CommandAck {
+                    command_id: command.command_id,
+                    disposition: CommandDisposition::Rejected,
+                    reason: "command_id was reused for a different operation".to_owned(),
+                };
+            }
             return record.ack.clone();
         }
 
@@ -322,6 +330,27 @@ mod tests {
         assert_eq!(duplicate, first);
         assert_eq!(runtime.active_command_id(), Some("cmd-1"));
         assert_eq!(runtime.mode(), RobotMode::Executing);
+    }
+
+    #[test]
+    fn conflicting_command_identity_never_replays_acceptance() {
+        let mut runtime = RobotRuntimeState::new(RobotMode::Ready);
+        let original = command("identity-1");
+        assert_eq!(
+            runtime.submit_command(original.clone()).disposition,
+            CommandDisposition::Accepted
+        );
+        let mut conflicting = original.clone();
+        conflicting.kind = "DIFFERENT_MOVE".to_owned();
+        assert_eq!(
+            runtime.submit_command(conflicting).disposition,
+            CommandDisposition::Rejected
+        );
+        assert_eq!(
+            runtime.submit_command(original).disposition,
+            CommandDisposition::Accepted
+        );
+        assert_eq!(runtime.active_command_id(), Some("identity-1"));
     }
 
     #[test]

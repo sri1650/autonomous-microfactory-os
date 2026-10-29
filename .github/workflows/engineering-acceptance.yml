@@ -33,6 +33,7 @@ jobs:
           password=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')
           echo "::add-mask::$password"
           echo "MICROFACTORY_POSTGRES_DSN=postgresql://postgres:$password@127.0.0.1:55432/microfactory" >> "$GITHUB_ENV"
+          echo "MICROFACTORY_POSTGRES_CONTAINER=microfactory-postgres-test" >> "$GITHUB_ENV"
           echo "MICROFACTORY_CLICKHOUSE_HOST=127.0.0.1" >> "$GITHUB_ENV"
           echo "MICROFACTORY_CLICKHOUSE_PORT=58123" >> "$GITHUB_ENV"
           echo "MICROFACTORY_CLICKHOUSE_DATABASE=microfactory" >> "$GITHUB_ENV"

@@ -1,0 +1,82 @@
+name: Engineering acceptance - live dependencies
+on:
+  push:
+    branches: [acceptance/engineering-closeout-2026-10-29]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-baseline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record exact source and private review archive
+        run: |
+          mkdir -p acceptance-results
+          git rev-parse HEAD > acceptance-results/source-commit.txt
+          git archive --format=zip --output=acceptance-results/source-snapshot.zip HEAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install existing project dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip freeze > acceptance-results/python-environment.txt
+          cargo build --workspace
+          rustc --version > acceptance-results/rust-version.txt
+      - name: Start disposable loopback databases
+        run: |
+          password=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')
+          echo "::add-mask::$password"
+          echo "MICROFACTORY_POSTGRES_DSN=postgresql://postgres:$password@127.0.0.1:55432/microfactory" >> "$GITHUB_ENV"
+          echo "MICROFACTORY_CLICKHOUSE_HOST=127.0.0.1" >> "$GITHUB_ENV"
+          echo "MICROFACTORY_CLICKHOUSE_PORT=58123" >> "$GITHUB_ENV"
+          echo "MICROFACTORY_CLICKHOUSE_DATABASE=microfactory" >> "$GITHUB_ENV"
+          echo "MICROFACTORY_CLICKHOUSE_PASSWORD=$password" >> "$GITHUB_ENV"
+          docker run --name microfactory-postgres-test -e POSTGRES_PASSWORD="$password" -e POSTGRES_DB=microfactory -p 127.0.0.1:55432:5432 -d postgres:17-alpine
+          docker run --name microfactory-clickhouse-test -e CLICKHOUSE_PASSWORD="$password" -e CLICKHOUSE_DB=microfactory -p 127.0.0.1:58123:8123 -d clickhouse/clickhouse-server:25.8-alpine
+          for i in $(seq 1 90); do
+            if docker exec microfactory-postgres-test pg_isready -U postgres >/dev/null 2>&1 && curl --fail --silent http://127.0.0.1:58123/ping >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo 'Disposable database readiness failed'
+          exit 1
+      - name: Execute full Python suite including actual databases and Rust processes
+        run: |
+          set -o pipefail
+          python -m pytest -q --junitxml=acceptance-results/python.xml 2>&1 | tee acceptance-results/python-tests.log
+      - name: Reject skipped required verification
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          root = ET.parse('acceptance-results/python.xml').getroot()
+          cases = root.findall('.//testcase')
+          skipped = [c.attrib for c in cases if c.find('skipped') is not None]
+          failed = [c.attrib for c in cases if c.find('failure') is not None or c.find('error') is not None]
+          report = {'scope':'existing full suite with real local PostgreSQL, ClickHouse and Rust services; not yet proof of causal production execution','tests':len(cases),'skipped':skipped,'failed':failed,'source_commit':Path('acceptance-results/source-commit.txt').read_text().strip()}
+          Path('acceptance-results/baseline.json').write_text(json.dumps(report,indent=2)+'\n')
+          if len(cases) < 153 or skipped or failed:
+              raise SystemExit('Acceptance cannot pass with missing, failed or skipped required tests')
+          print(f'{len(cases)} tests executed, zero skipped, zero failed')
+          PY
+      - name: Execute native Rust regression tests
+        run: |
+          set -o pipefail
+          cargo test --workspace 2>&1 | tee acceptance-results/rust-tests.log
+      - name: Stop and remove temporary databases
+        if: always()
+        run: docker rm -f microfactory-postgres-test microfactory-clickhouse-test || true
+      - name: Retain private source and acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-acceptance-source-and-evidence
+          path: acceptance-results/
+          retention-days: 7
+          if-no-files-found: error

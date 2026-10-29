@@ -6,7 +6,10 @@ use tonic::transport::Server;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
-    let address: std::net::SocketAddr = args.next().unwrap_or_else(|| "127.0.0.1:50051".to_owned()).parse()?;
+    let address: std::net::SocketAddr = args
+        .next()
+        .unwrap_or_else(|| "127.0.0.1:50051".to_owned())
+        .parse()?;
     let robot_id = args.next().unwrap_or_else(|| "robot-1".to_owned());
     let service = match args.next().as_deref() {
         None => RuntimeService::new(robot_id, RobotMode::Ready),
@@ -24,6 +27,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(_) => return Err("expected --simulate or no extra argument".into()),
     };
     println!("READY {address}");
-    Server::builder().add_service(RobotRuntimeServer::new(service)).serve(address).await?;
+    Server::builder()
+        .add_service(RobotRuntimeServer::new(service))
+        .serve(address)
+        .await?;
     Ok(())
 }

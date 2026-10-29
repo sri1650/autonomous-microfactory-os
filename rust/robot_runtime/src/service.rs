@@ -18,11 +18,13 @@ use crate::proto::robot_runtime_server::RobotRuntime;
 use crate::proto::{
     CommandAck as ProtoCommandAck, CommandDisposition as ProtoCommandDisposition,
     CommandResult as ProtoCommandResult, CommandResultRequest,
-    CommandTerminalState as ProtoTerminal, Pose2D,
-    RobotCommand as ProtoRobotCommand, RobotMode as ProtoRobotMode, RobotStatus,
-    RobotStatusRequest,
+    CommandTerminalState as ProtoTerminal, Pose2D, RobotCommand as ProtoRobotCommand,
+    RobotMode as ProtoRobotMode, RobotStatus, RobotStatusRequest,
 };
-use crate::{CommandDisposition, CommandResult, CommandTerminalState, RobotCommand, RobotMode, RobotRuntimeState};
+use crate::{
+    CommandDisposition, CommandResult, CommandTerminalState, RobotCommand, RobotMode,
+    RobotRuntimeState,
+};
 
 #[derive(Debug, Clone)]
 pub struct RuntimeService {
@@ -38,7 +40,11 @@ impl RuntimeService {
         Self {
             robot_id: robot_id.into(),
             state: Arc::new(Mutex::new(RobotRuntimeState::new(mode))),
-            execution: Arc::new(Mutex::new(ExecutionBook::new(Pose2D { x: 0.0, y: 0.0, yaw: 0.0 }))),
+            execution: Arc::new(Mutex::new(ExecutionBook::new(Pose2D {
+                x: 0.0,
+                y: 0.0,
+                yaw: 0.0,
+            }))),
             simulated: false,
         }
     }
@@ -63,7 +69,8 @@ fn wire_result(result: &CommandResult) -> ProtoCommandResult {
         CommandTerminalState::Cancelled => ProtoTerminal::Cancelled,
     };
     ProtoCommandResult {
-        command_id: result.command_id.clone(), state: state as i32,
+        command_id: result.command_id.clone(),
+        state: state as i32,
         detail: result.detail.clone(),
     }
 }
@@ -79,8 +86,14 @@ impl RobotRuntime for RuntimeService {
         let request = request.into_inner();
         let mut span = global::tracer("robot_runtime")
             .start_with_context("runtime.submit_command", &parent_context);
-        span.set_attribute(KeyValue::new("microfactory.robot_id", self.robot_id.clone()));
-        span.set_attribute(KeyValue::new("microfactory.command_id", request.command_id.clone()));
+        span.set_attribute(KeyValue::new(
+            "microfactory.robot_id",
+            self.robot_id.clone(),
+        ));
+        span.set_attribute(KeyValue::new(
+            "microfactory.command_id",
+            request.command_id.clone(),
+        ));
         let span_context = span.span_context().clone();
         if request.robot_id != self.robot_id {
             span.end();
@@ -96,34 +109,49 @@ impl RobotRuntime for RuntimeService {
             if previous != &request {
                 span.end();
                 return Ok(Response::new(ProtoCommandAck {
-                    command_id: request.command_id, disposition: ProtoCommandDisposition::Rejected as i32,
-                    reason: "command_id was reused with different payload, deadline or identity".to_owned(),
+                    command_id: request.command_id,
+                    disposition: ProtoCommandDisposition::Rejected as i32,
+                    reason: "command_id was reused with different payload, deadline or identity"
+                        .to_owned(),
                 }));
             }
         }
         if is_new && book.requests.len() >= 10000 {
             span.end();
-            return Err(Status::resource_exhausted("bounded runtime history is full; create a new explicit session"));
+            return Err(Status::resource_exhausted(
+                "bounded runtime history is full; create a new explicit session",
+            ));
         }
         let plan = if is_new && self.simulated {
             match validate_route(&request, &book.pose) {
                 Ok(route) => Some(route),
-                Err(error) => { span.end(); return Err(error); }
+                Err(error) => {
+                    span.end();
+                    return Err(*error);
+                }
             }
-        } else { None };
+        } else {
+            None
+        };
         let ack = self.state.lock().await.submit_command(RobotCommand {
             command_id: request.command_id.clone(),
             correlation_id: request.correlation_id.clone(),
             kind: request.kind.clone(),
         });
         if is_new {
-            book.requests.insert(request.command_id.clone(), request.clone());
+            book.requests
+                .insert(request.command_id.clone(), request.clone());
             book.steps.insert(request.command_id.clone(), 0);
         }
         drop(book);
         if is_new && ack.disposition == CommandDisposition::Accepted {
             if let Some(route) = plan {
-                tokio::spawn(execute_route(Arc::clone(&self.state), Arc::clone(&self.execution), request, route));
+                tokio::spawn(execute_route(
+                    Arc::clone(&self.state),
+                    Arc::clone(&self.execution),
+                    request,
+                    route,
+                ));
             }
         }
         let disposition = match ack.disposition {
@@ -136,56 +164,94 @@ impl RobotRuntime for RuntimeService {
             reason: ack.reason,
         });
         if span_context.is_valid() {
-            response.metadata_mut().insert("x-microfactory-trace-id", span_context.trace_id().to_string().parse().unwrap());
-            response.metadata_mut().insert("x-microfactory-span-id", span_context.span_id().to_string().parse().unwrap());
+            response.metadata_mut().insert(
+                "x-microfactory-trace-id",
+                span_context.trace_id().to_string().parse().unwrap(),
+            );
+            response.metadata_mut().insert(
+                "x-microfactory-span-id",
+                span_context.span_id().to_string().parse().unwrap(),
+            );
         }
         if parent_span_context.is_valid() {
-            response.metadata_mut().insert("x-microfactory-parent-trace-id", parent_span_context.trace_id().to_string().parse().unwrap());
+            response.metadata_mut().insert(
+                "x-microfactory-parent-trace-id",
+                parent_span_context.trace_id().to_string().parse().unwrap(),
+            );
         }
         span.end();
         Ok(response)
     }
 
-    async fn get_status(&self, request: Request<RobotStatusRequest>) -> Result<Response<RobotStatus>, Status> {
+    async fn get_status(
+        &self,
+        request: Request<RobotStatusRequest>,
+    ) -> Result<Response<RobotStatus>, Status> {
         if request.into_inner().robot_id != self.robot_id {
             return Err(Status::not_found("robot_id does not match this runtime"));
         }
         let book = self.execution.lock().await;
         let state = self.state.lock().await;
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default();
         Ok(Response::new(RobotStatus {
-            robot_id: self.robot_id.clone(), mode: proto_mode(state.mode()).into(),
-            pose: if self.simulated { Some(Pose2D { x: book.pose.x, y: book.pose.y, yaw: book.pose.yaw }) } else { None },
+            robot_id: self.robot_id.clone(),
+            mode: proto_mode(state.mode()).into(),
+            pose: if self.simulated {
+                Some(Pose2D {
+                    x: book.pose.x,
+                    y: book.pose.y,
+                    yaw: book.pose.yaw,
+                })
+            } else {
+                None
+            },
             battery_fraction: 1.0,
             active_command_id: state.active_command_id().unwrap_or_default().to_owned(),
             faults: Vec::new(),
-            heartbeat_time: Some(prost_types::Timestamp { seconds: now.as_secs() as i64, nanos: now.subsec_nanos() as i32 }),
-            runtime_session_id: book.session_id.clone(), software_simulation: self.simulated,
+            heartbeat_time: Some(prost_types::Timestamp {
+                seconds: now.as_secs() as i64,
+                nanos: now.subsec_nanos() as i32,
+            }),
+            runtime_session_id: book.session_id.clone(),
+            software_simulation: self.simulated,
         }))
     }
 
-    async fn get_command_result(&self, request: Request<CommandResultRequest>) -> Result<Response<ProtoCommandResult>, Status> {
+    async fn get_command_result(
+        &self,
+        request: Request<CommandResultRequest>,
+    ) -> Result<Response<ProtoCommandResult>, Status> {
         let query = request.into_inner();
         if query.robot_id != self.robot_id {
             return Err(Status::not_found("robot_id does not match this runtime"));
         }
         let book = self.execution.lock().await;
         if !book.requests.contains_key(&query.command_id) {
-            return Err(Status::not_found("command is unknown in this runtime session"));
+            return Err(Status::not_found(
+                "command is unknown in this runtime session",
+            ));
         }
         let core = self.state.lock().await;
         if let Some(result) = core.terminal_result(&query.command_id) {
             return Ok(Response::new(wire_result(result)));
         }
         Ok(Response::new(ProtoCommandResult {
-            command_id: query.command_id, state: ProtoTerminal::Unspecified as i32,
+            command_id: query.command_id,
+            state: ProtoTerminal::Unspecified as i32,
             detail: "PENDING: no terminal execution result exists".to_owned(),
         }))
     }
 
-    async fn cancel_command(&self, request: Request<CommandResultRequest>) -> Result<Response<ProtoCommandResult>, Status> {
+    async fn cancel_command(
+        &self,
+        request: Request<CommandResultRequest>,
+    ) -> Result<Response<ProtoCommandResult>, Status> {
         if !self.simulated {
-            return Err(Status::failed_precondition("cancellation endpoint requires explicit software simulation mode"));
+            return Err(Status::failed_precondition(
+                "cancellation endpoint requires explicit software simulation mode",
+            ));
         }
         let query = request.into_inner();
         if query.robot_id != self.robot_id {
@@ -199,11 +265,13 @@ impl RobotRuntime for RuntimeService {
         if let Some(existing) = core.terminal_result(&query.command_id) {
             return Ok(Response::new(wire_result(existing)));
         }
-        let result = core.finish_command(CommandResult {
-            command_id: query.command_id,
-            state: CommandTerminalState::Cancelled,
-            detail: "explicit cancellation of software route; no hardware action".to_owned(),
-        }).map_err(|_| Status::failed_precondition("command cannot be cancelled"))?;
+        let result = core
+            .finish_command(CommandResult {
+                command_id: query.command_id,
+                state: CommandTerminalState::Cancelled,
+                detail: "explicit cancellation of software route; no hardware action".to_owned(),
+            })
+            .map_err(|_| Status::failed_precondition("command cannot be cancelled"))?;
         Ok(Response::new(wire_result(&result)))
     }
 }

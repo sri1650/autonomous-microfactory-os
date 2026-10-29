@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+import hashlib
+import json
 
 from microfactory.domain.models import JobRecord, JobState, TaskState
 from microfactory.domain.repositories import EventSink, JobRepository
@@ -33,7 +35,12 @@ class Orchestrator:
         self._operations: dict[str, _IdempotencyEntry] = {}
 
     def submit_job(self, job: JobRecord, *, command_id: str) -> OperationResult:
-        fingerprint = ("submit", job.job_id)
+        definition = {
+            "job_id": job.job_id, "priority": job.priority,
+            "tasks": [asdict(task.definition) for _, task in sorted(job.tasks.items())],
+        }
+        encoded = json.dumps(definition, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        fingerprint = ("submit", job.job_id, hashlib.sha256(encoded.encode("utf-8")).hexdigest())
         replay = self._replay(command_id, fingerprint)
         if replay is not None:
             return replay
@@ -192,6 +199,8 @@ class Orchestrator:
         return job
 
     def _replay(self, command_id: str, fingerprint: tuple[str, ...]) -> OperationResult | None:
+        if not isinstance(command_id, str) or not command_id.strip():
+            raise ValueError("command_id must be a non-empty opaque string")
         entry = self._operations.get(command_id)
         if entry is None:
             return None

@@ -1,0 +1,67 @@
+name: Runtime terminal-result development verification
+on:
+  push:
+    branches: [acceptance/engineering-closeout-2026-10-29]
+    paths:
+      - 'contracts/proto/**'
+      - 'rust/**'
+      - 'Cargo.lock'
+      - '.github/workflows/runtime-terminal-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  execution:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install protocol generator and format review copy
+        run: |
+          mkdir -p terminal-results
+          python -m pip install 'grpcio-tools>=1.76,<1.77'
+          python contracts/proto/generate_python.py
+          cargo fmt --all
+          git diff --stat > terminal-results/generated-review-diff.txt
+          printf '%s\n' 'Development compile/test of formatted source and generated bindings. Generated files must be committed and strict unchanged-source CI must pass before merge.' > terminal-results/SCOPE.txt
+      - name: Execute real Tokio terminal outcomes and existing Rust tests
+        run: |
+          set -o pipefail
+          cargo test --workspace 2>&1 | tee terminal-results/rust-tests.log
+          cargo clippy --workspace --all-targets -- -D warnings 2>&1 | tee terminal-results/clippy.log
+          cargo build --bin robot_runtime_server
+      - name: Save generated source for explicit review and commit
+        if: always()
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          roots = [Path('rust'),Path('src/microfactory/contracts/generated')]
+          with zipfile.ZipFile('terminal-results/generated-source.zip','w',compression=zipfile.ZIP_DEFLATED) as z:
+              for root in roots:
+                  for p in root.rglob('*'):
+                      if p.is_file() and p.suffix in ('.rs','.toml','.py'):
+                          z.write(p,p.as_posix())
+              z.write('Cargo.lock','Cargo.lock')
+          binary=Path('target/debug/robot_runtime_server')
+          if binary.exists():
+              import shutil
+              shutil.copyfile(binary,'terminal-results/robot_runtime_server')
+          PY
+      - name: Download Linux Python 3.13 packages for offline local verification
+        run: |
+          python -m pip download --dest terminal-results/wheels --python-version 3.13 --only-binary=:all: \
+            'grpcio-tools>=1.76,<1.77' 'psycopg[binary]>=3.2' 'ortools>=9.11' 'clickhouse-connect>=0.8' 'uvicorn>=0.30'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terminal-runtime-source-tests-and-local-tools
+          path: terminal-results/
+          retention-days: 3
+          if-no-files-found: error

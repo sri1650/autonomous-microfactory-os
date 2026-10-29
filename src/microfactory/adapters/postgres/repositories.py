@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 from typing import Callable, Protocol, Any
 
@@ -139,3 +140,57 @@ class PostgresCommandRepository:
         except Exception:
             conn.rollback()
             raise
+
+
+@dataclass(frozen=True, slots=True)
+class PersistedDomainEvent:
+    event_id: int
+    event_type: str
+    aggregate_id: str
+    payload: dict
+
+
+class PostgresEventStore:
+    """Durable append/read boundary used by orchestration and the live API."""
+
+    def __init__(self, connection_factory: Callable[[], ConnectionLike]) -> None:
+        self._connection_factory = connection_factory
+
+    @classmethod
+    def from_dsn(cls, dsn: str) -> "PostgresEventStore":
+        try:
+            import psycopg
+        except ImportError as exc:
+            raise RuntimeError("psycopg is required for PostgreSQL integration") from exc
+        return cls(lambda: psycopg.connect(dsn))
+
+    def append(self, *, event_type: str, aggregate_id: str, payload) -> None:
+        conn = self._connection_factory()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO domain_events(aggregate_id, event_type, payload)
+                       VALUES (%s, %s, %s::jsonb)""",
+                    (aggregate_id, event_type, json.dumps(dict(payload))),
+                )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+
+    def list_for_aggregate(self, aggregate_id: str) -> tuple[PersistedDomainEvent, ...]:
+        conn = self._connection_factory()
+        with conn.cursor() as cur:
+            cur.execute(
+                """SELECT event_id, event_type, aggregate_id, payload
+                   FROM domain_events WHERE aggregate_id = %s ORDER BY event_id""",
+                (aggregate_id,),
+            )
+            rows = cur.fetchall()
+        return tuple(
+            PersistedDomainEvent(
+                event_id=int(row[0]), event_type=str(row[1]), aggregate_id=str(row[2]),
+                payload=dict(row[3]),
+            )
+            for row in rows
+        )

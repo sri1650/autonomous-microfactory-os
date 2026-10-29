@@ -25,19 +25,19 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rfactory.proto\x12\x0fmicrofactory.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"+\n\x06Pose2D\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\x0b\n\x03yaw\x18\x03 \x01(\x01\"\x9e\x01\n\x0cRobotCommand\x12\x12\n\ncommand_id\x18\x01 \x01(\t\x12\x16\n\x0e\x63orrelation_id\x18\x02 \x01(\t\x12\x10\n\x08robot_id\x18\x03 \x01(\t\x12\x0c\n\x04kind\x18\x04 \x01(\t\x12,\n\x08\x64\x65\x61\x64line\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x14\n\x0cpayload_json\x18\x06 \x01(\x0c\"j\n\nCommandAck\x12\x12\n\ncommand_id\x18\x01 \x01(\t\x12\x38\n\x0b\x64isposition\x18\x02 \x01(\x0e\x32#.microfactory.v1.CommandDisposition\x12\x0e\n\x06reason\x18\x03 \x01(\t\"i\n\rCommandResult\x12\x12\n\ncommand_id\x18\x01 \x01(\t\x12\x34\n\x05state\x18\x02 \x01(\x0e\x32%.microfactory.v1.CommandTerminalState\x12\x0e\n\x06\x64\x65tail\x18\x03 \x01(\t\"\xe9\x01\n\x0bRobotStatus\x12\x10\n\x08robot_id\x18\x01 \x01(\t\x12(\n\x04mode\x18\x02 \x01(\x0e\x32\x1a.microfactory.v1.RobotMode\x12%\n\x04pose\x18\x03 \x01(\x0b\x32\x17.microfactory.v1.Pose2D\x12\x18\n\x10\x62\x61ttery_fraction\x18\x04 \x01(\x01\x12\x19\n\x11\x61\x63tive_command_id\x18\x05 \x01(\t\x12\x0e\n\x06\x66\x61ults\x18\x06 \x03(\t\x12\x32\n\x0eheartbeat_time\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"&\n\x12RobotStatusRequest\x12\x10\n\x08robot_id\x18\x01 \x01(\t*\xe0\x01\n\tRobotMode\x12\x1a\n\x16ROBOT_MODE_UNSPECIFIED\x10\x00\x12\x16\n\x12ROBOT_MODE_OFFLINE\x10\x01\x12\x13\n\x0fROBOT_MODE_IDLE\x10\x02\x12\x15\n\x11ROBOT_MODE_HOMING\x10\x03\x12\x14\n\x10ROBOT_MODE_READY\x10\x04\x12\x18\n\x14ROBOT_MODE_EXECUTING\x10\x05\x12\x15\n\x11ROBOT_MODE_PAUSED\x10\x06\x12\x16\n\x12ROBOT_MODE_FAULTED\x10\x07\x12\x14\n\x10ROBOT_MODE_ESTOP\x10\x08*}\n\x12\x43ommandDisposition\x12#\n\x1f\x43OMMAND_DISPOSITION_UNSPECIFIED\x10\x00\x12 \n\x1c\x43OMMAND_DISPOSITION_ACCEPTED\x10\x01\x12 \n\x1c\x43OMMAND_DISPOSITION_REJECTED\x10\x02*\xd3\x01\n\x14\x43ommandTerminalState\x12&\n\"COMMAND_TERMINAL_STATE_UNSPECIFIED\x10\x00\x12$\n COMMAND_TERMINAL_STATE_SUCCEEDED\x10\x01\x12!\n\x1d\x43OMMAND_TERMINAL_STATE_FAILED\x10\x02\x12$\n COMMAND_TERMINAL_STATE_TIMED_OUT\x10\x03\x12$\n COMMAND_TERMINAL_STATE_CANCELLED\x10\x04\x32\xab\x01\n\x0cRobotRuntime\x12K\n\rSubmitCommand\x12\x1d.microfactory.v1.RobotCommand\x1a\x1b.microfactory.v1.CommandAck\x12N\n\tGetStatus\x12#.microfactory.v1.RobotStatusRequest\x1a\x1c.microfactory.v1.RobotStatusb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rfactory.proto\x12\x0fmicrofactory.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"+\n\x06Pose2D\x12\t\n\x01x\x18\x01 \x01(\x01\x12\t\n\x01y\x18\x02 \x01(\x01\x12\x0b\n\x03yaw\x18\x03 \x01(\x01\"\x9e\x01\n\x0cRobotCommand\x12\x12\n\ncommand_id\x18\x01 \x01(\t\x12\x16\n\x0e\x63orrelation_id\x18\x02 \x01(\t\x12\x10\n\x08robot_id\x18\x03 \x01(\t\x12\x0c\n\x04kind\x18\x04 \x01(\t\x12,\n\x08\x64\x65\x61\x64line\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x14\n\x0cpayload_json\x18\x06 \x01(\x0c\"j\n\nCommandAck\x12\x12\n\ncommand_id\x18\x01 \x01(\t\x12\x38\n\x0b\x64isposition\x18\x02 \x01(\x0e\x32#.microfactory.v1.CommandDisposition\x12\x0e\n\x06reason\x18\x03 \x01(\t\"i\n\rCommandResult\x12\x12\n\ncommand_id\x18\x01 \x01(\t\x12\x34\n\x05state\x18\x02 \x01(\x0e\x32%.microfactory.v1.CommandTerminalState\x12\x0e\n\x06\x64\x65tail\x18\x03 \x01(\t\"\xa2\x02\n\x0bRobotStatus\x12\x10\n\x08robot_id\x18\x01 \x01(\t\x12(\n\x04mode\x18\x02 \x01(\x0e\x32\x1a.microfactory.v1.RobotMode\x12%\n\x04pose\x18\x03 \x01(\x0b\x32\x17.microfactory.v1.Pose2D\x12\x18\n\x10\x62\x61ttery_fraction\x18\x04 \x01(\x01\x12\x19\n\x11\x61\x63tive_command_id\x18\x05 \x01(\t\x12\x0e\n\x06\x66\x61ults\x18\x06 \x03(\t\x12\x32\n\x0eheartbeat_time\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x1a\n\x12runtime_session_id\x18\x08 \x01(\t\x12\x1b\n\x13software_simulation\x18\t \x01(\x08\"&\n\x12RobotStatusRequest\x12\x10\n\x08robot_id\x18\x01 \x01(\t\"<\n\x14\x43ommandResultRequest\x12\x10\n\x08robot_id\x18\x01 \x01(\t\x12\x12\n\ncommand_id\x18\x02 \x01(\t*\xe0\x01\n\tRobotMode\x12\x1a\n\x16ROBOT_MODE_UNSPECIFIED\x10\x00\x12\x16\n\x12ROBOT_MODE_OFFLINE\x10\x01\x12\x13\n\x0fROBOT_MODE_IDLE\x10\x02\x12\x15\n\x11ROBOT_MODE_HOMING\x10\x03\x12\x14\n\x10ROBOT_MODE_READY\x10\x04\x12\x18\n\x14ROBOT_MODE_EXECUTING\x10\x05\x12\x15\n\x11ROBOT_MODE_PAUSED\x10\x06\x12\x16\n\x12ROBOT_MODE_FAULTED\x10\x07\x12\x14\n\x10ROBOT_MODE_ESTOP\x10\x08*}\n\x12\x43ommandDisposition\x12#\n\x1f\x43OMMAND_DISPOSITION_UNSPECIFIED\x10\x00\x12 \n\x1c\x43OMMAND_DISPOSITION_ACCEPTED\x10\x01\x12 \n\x1c\x43OMMAND_DISPOSITION_REJECTED\x10\x02*\xd3\x01\n\x14\x43ommandTerminalState\x12&\n\"COMMAND_TERMINAL_STATE_UNSPECIFIED\x10\x00\x12$\n COMMAND_TERMINAL_STATE_SUCCEEDED\x10\x01\x12!\n\x1d\x43OMMAND_TERMINAL_STATE_FAILED\x10\x02\x12$\n COMMAND_TERMINAL_STATE_TIMED_OUT\x10\x03\x12$\n COMMAND_TERMINAL_STATE_CANCELLED\x10\x04\x32\xde\x02\n\x0cRobotRuntime\x12K\n\rSubmitCommand\x12\x1d.microfactory.v1.RobotCommand\x1a\x1b.microfactory.v1.CommandAck\x12N\n\tGetStatus\x12#.microfactory.v1.RobotStatusRequest\x1a\x1c.microfactory.v1.RobotStatus\x12Y\n\x10GetCommandResult\x12%.microfactory.v1.CommandResultRequest\x1a\x1e.microfactory.v1.CommandResult\x12V\n\rCancelCommand\x12%.microfactory.v1.CommandResultRequest\x1a\x1e.microfactory.v1.CommandResultb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'factory_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_ROBOTMODE']._serialized_start=765
-  _globals['_ROBOTMODE']._serialized_end=989
-  _globals['_COMMANDDISPOSITION']._serialized_start=991
-  _globals['_COMMANDDISPOSITION']._serialized_end=1116
-  _globals['_COMMANDTERMINALSTATE']._serialized_start=1119
-  _globals['_COMMANDTERMINALSTATE']._serialized_end=1330
+  _globals['_ROBOTMODE']._serialized_start=884
+  _globals['_ROBOTMODE']._serialized_end=1108
+  _globals['_COMMANDDISPOSITION']._serialized_start=1110
+  _globals['_COMMANDDISPOSITION']._serialized_end=1235
+  _globals['_COMMANDTERMINALSTATE']._serialized_start=1238
+  _globals['_COMMANDTERMINALSTATE']._serialized_end=1449
   _globals['_POSE2D']._serialized_start=67
   _globals['_POSE2D']._serialized_end=110
   _globals['_ROBOTCOMMAND']._serialized_start=113
@@ -47,9 +47,11 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_COMMANDRESULT']._serialized_start=381
   _globals['_COMMANDRESULT']._serialized_end=486
   _globals['_ROBOTSTATUS']._serialized_start=489
-  _globals['_ROBOTSTATUS']._serialized_end=722
-  _globals['_ROBOTSTATUSREQUEST']._serialized_start=724
-  _globals['_ROBOTSTATUSREQUEST']._serialized_end=762
-  _globals['_ROBOTRUNTIME']._serialized_start=1333
-  _globals['_ROBOTRUNTIME']._serialized_end=1504
+  _globals['_ROBOTSTATUS']._serialized_end=779
+  _globals['_ROBOTSTATUSREQUEST']._serialized_start=781
+  _globals['_ROBOTSTATUSREQUEST']._serialized_end=819
+  _globals['_COMMANDRESULTREQUEST']._serialized_start=821
+  _globals['_COMMANDRESULTREQUEST']._serialized_end=881
+  _globals['_ROBOTRUNTIME']._serialized_start=1452
+  _globals['_ROBOTRUNTIME']._serialized_end=1802
 # @@protoc_insertion_point(module_scope)

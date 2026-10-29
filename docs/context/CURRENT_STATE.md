@@ -125,3 +125,11 @@ If that passes, start the first dependency-ready incomplete formal task. Do not 
 - M10-T01 complete: recruiter README now links only retained measurements, explains the architecture and trade-offs, provides exact local/live commands, and states the hardware/production/safety boundary.
 - M10-T02 complete: the three-minute demo has a timed narration, exact E2E/report/preview commands, expected results, capture shots, and an explicit recording truthfulness checklist.
 - M10-T03 complete: interview preparation covers architecture trade-offs, algorithm mechanics, real debugging stories, failure semantics, measured evidence and explicit next validation steps.
+
+## Engineering closeout — 29 October 2026
+
+- Exact saved commit `a08047a` passed unchanged-source `cargo fmt --all -- --check`, strict Clippy, all 17 Rust tests, Python protocol regeneration with zero diff, and 150 Python tests (six live-service tests skipped before disposable services were started).
+- The new Python `RuntimeTaskExecutor` persists command intent, requires explicit Rust software-simulation/session identity, treats `ACCEPTED` only as entry to `EXECUTING`, and advances task/job state solely from the matching terminal `GetCommandResult`.
+- Runtime failure, timeout, cancellation, unavailable result and changed runtime session fail closed; command-content reuse is rejected. A changed session after orchestrator restart cannot replay success.
+- PostgreSQL now stores domain events as well as jobs/command identities. The live API can expose persisted per-job event replay when configured with the event reader.
+- On the Apple Silicon host, a complete disposable PostgreSQL 17 + ClickHouse 25.8 + real Rust-process run passed **163 tests with zero skips/failures**, including PostgreSQL container restart and the new causal runtime-to-persistence-to-live-API test. This remains software/simulation evidence only.

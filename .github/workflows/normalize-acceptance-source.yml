@@ -1,0 +1,78 @@
+name: One-time acceptance source normalization
+on:
+  push:
+    branches: [acceptance/engineering-closeout-2026-10-29]
+    paths: [.github/workflows/normalize-acceptance-source.yml]
+permissions:
+  contents: read
+jobs:
+  normalize:
+    if: github.ref == 'refs/heads/acceptance/engineering-closeout-2026-10-29'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: acceptance/engineering-closeout-2026-10-29
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Apply the explicit boxed-error correction and regenerate protocol
+        run: |
+          python -m pip install 'grpcio-tools==1.76.0' 'protobuf==6.33.6'
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('rust/robot_runtime/src/execution.rs')
+          source=p.read_text()
+          if 'Result<SimulationRoute, Status>' not in source:
+              raise SystemExit('Unexpected source; do not rewrite another revision')
+          source=source.replace('Result<SimulationRoute, Status>','Result<SimulationRoute, Box<Status>>',1)
+          source,n=re.subn(r'return Err\((Status::(?:invalid_argument|failed_precondition|deadline_exceeded)\(.*?\))\);',r'return Err(Box::new(\1));',source,flags=re.S)
+          if n != 9:
+              raise SystemExit(f'Unexpected validation-error count: {n}')
+          p.write_text(source)
+          p=Path('rust/robot_runtime/src/service.rs')
+          source=p.read_text()
+          if source.count('return Err(error);') != 1:
+              raise SystemExit('Unexpected route-error conversion')
+          p.write_text(source.replace('return Err(error);','return Err(*error);',1))
+          PY
+          python contracts/proto/generate_python.py
+          cargo fmt --all
+          cargo test --workspace
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo fmt --all -- --check
+      - name: Commit only reviewed normalization paths to the acceptance branch
+        run: |
+          python - <<'PY'
+          import subprocess
+          allowed={'Cargo.lock','rust/robot_runtime/src/execution.rs','rust/robot_runtime/src/service.rs','rust/robot_runtime/src/bin/robot_runtime_server.rs','rust/robot_runtime/tests/simulated_execution.rs','src/microfactory/contracts/generated/factory_pb2.py','src/microfactory/contracts/generated/factory_pb2_grpc.py'}
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          if not changed or not changed <= allowed:
+              raise SystemExit(f'Unexpected modified paths: {changed-allowed}')
+          subprocess.run(['git','add','--',*sorted(changed)],check=True)
+          PY
+          git config user.name 'Project acceptance automation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Box route validation errors and commit generated protocol and formatted Rust sources'
+          git push origin HEAD:refs/heads/acceptance/engineering-closeout-2026-10-29
+          mkdir -p verification
+          git rev-parse HEAD > verification/source-commit.txt
+          git show --stat --oneline HEAD > verification/committed-files.txt
+          git archive --format=zip --output=verification/source-snapshot.zip HEAD
+          cp target/debug/robot_runtime_server verification/robot_runtime_server
+      - name: Prepare offline dependencies for independent local review
+        run: |
+          python -m pip download --dest verification/wheels --python-version 3.13 --only-binary=:all: 'grpcio-tools==1.76.0' 'psycopg[binary]>=3.2' 'ortools>=9.11' 'clickhouse-connect>=0.8'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: normalized-source-and-tools
+          path: verification/
+          retention-days: 3
+          if-no-files-found: warn

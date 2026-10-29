@@ -44,6 +44,16 @@ class RobotRuntimeStub(object):
                 request_serializer=factory__pb2.RobotStatusRequest.SerializeToString,
                 response_deserializer=factory__pb2.RobotStatus.FromString,
                 _registered_method=True)
+        self.GetCommandResult = channel.unary_unary(
+                '/microfactory.v1.RobotRuntime/GetCommandResult',
+                request_serializer=factory__pb2.CommandResultRequest.SerializeToString,
+                response_deserializer=factory__pb2.CommandResult.FromString,
+                _registered_method=True)
+        self.CancelCommand = channel.unary_unary(
+                '/microfactory.v1.RobotRuntime/CancelCommand',
+                request_serializer=factory__pb2.CommandResultRequest.SerializeToString,
+                response_deserializer=factory__pb2.CommandResult.FromString,
+                _registered_method=True)
 
 
 class RobotRuntimeServicer(object):
@@ -61,6 +71,18 @@ class RobotRuntimeServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetCommandResult(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CancelCommand(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RobotRuntimeServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -73,6 +95,16 @@ def add_RobotRuntimeServicer_to_server(servicer, server):
                     servicer.GetStatus,
                     request_deserializer=factory__pb2.RobotStatusRequest.FromString,
                     response_serializer=factory__pb2.RobotStatus.SerializeToString,
+            ),
+            'GetCommandResult': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetCommandResult,
+                    request_deserializer=factory__pb2.CommandResultRequest.FromString,
+                    response_serializer=factory__pb2.CommandResult.SerializeToString,
+            ),
+            'CancelCommand': grpc.unary_unary_rpc_method_handler(
+                    servicer.CancelCommand,
+                    request_deserializer=factory__pb2.CommandResultRequest.FromString,
+                    response_serializer=factory__pb2.CommandResult.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -129,6 +161,60 @@ class RobotRuntime(object):
             '/microfactory.v1.RobotRuntime/GetStatus',
             factory__pb2.RobotStatusRequest.SerializeToString,
             factory__pb2.RobotStatus.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetCommandResult(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/microfactory.v1.RobotRuntime/GetCommandResult',
+            factory__pb2.CommandResultRequest.SerializeToString,
+            factory__pb2.CommandResult.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CancelCommand(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/microfactory.v1.RobotRuntime/CancelCommand',
+            factory__pb2.CommandResultRequest.SerializeToString,
+            factory__pb2.CommandResult.FromString,
             options,
             channel_credentials,
             insecure,

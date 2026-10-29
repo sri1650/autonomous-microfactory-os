@@ -65,13 +65,22 @@ message RobotStatus {
   string active_command_id = 5;
   repeated string faults = 6;
   google.protobuf.Timestamp heartbeat_time = 7;
+  string runtime_session_id = 8;
+  bool software_simulation = 9;
 }
 
 service RobotRuntime {
   rpc SubmitCommand(RobotCommand) returns (CommandAck);
   rpc GetStatus(RobotStatusRequest) returns (RobotStatus);
+  rpc GetCommandResult(CommandResultRequest) returns (CommandResult);
+  rpc CancelCommand(CommandResultRequest) returns (CommandResult);
 }
 
 message RobotStatusRequest {
   string robot_id = 1;
+}
+
+message CommandResultRequest {
+  string robot_id = 1;
+  string command_id = 2;
 }
